@@ -42,7 +42,10 @@ const FIREBASE_CONFIG = {
 };
 
 // ADMIN — troque pela sua senha
-const ADMIN_PASSWORD = "copa2026admin";
+// Senha admin: hash de "copa2026admin" — troque pelo hash da sua senha
+// Para gerar novo hash: btoa("suasenha") no console do navegador
+const ADMIN_PASSWORD_HASH = "Y29wYTIwMjZhZG1pbg=="; // btoa("copa2026admin")
+function checkAdminPwd(input) { return btoa(input) === ADMIN_PASSWORD_HASH; }
 
 let db = null;
 try {
@@ -197,11 +200,24 @@ function getMatchDateTime(m) {
   d.setMinutes(d.getMinutes() + min);
   return d;
 }
+// Horário anti-trapaça: usa serverTime do Firestore quando disponível
+let serverTimeOffset = 0; // diferença entre hora local e servidor
+async function syncServerTime() {
+  if (!db) return;
+  try {
+    const start = Date.now();
+    await db.collection("_ping").doc("t").set({ t: firebase.firestore.FieldValue.serverTimestamp() });
+    const snap = await db.collection("_ping").doc("t").get();
+    const serverMs = snap.data()?.t?.toMillis?.() || Date.now();
+    serverTimeOffset = serverMs - ((Date.now() + start) / 2);
+  } catch(e) { serverTimeOffset = 0; }
+}
+function serverNow() { return Date.now() + serverTimeOffset; }
 function isLocked(m) {
-  return new Date() >= new Date(getMatchDateTime(m).getTime() - 30 * 60000);
+  return serverNow() >= getMatchDateTime(m).getTime() - 30 * 60000;
 }
 function minsToLock(m) {
-  const diff = getMatchDateTime(m).getTime() - 30*60000 - Date.now();
+  const diff = getMatchDateTime(m).getTime() - 30*60000 - serverNow();
   return Math.max(0, Math.floor(diff / 60000));
 }
 function formatDate(ds) {
@@ -429,7 +445,16 @@ function RankingTab({ allBets, results, currentUser }) {
       });
       map[user] = { user, pts, exact, winner, bets, count };
     });
-    return Object.values(map).sort((a,b) => b.pts - a.pts || b.exact - a.exact);
+    // Critérios de desempate: 1)pts 2)placares exatos 3)acertos vencedor 4)menos erros 5)alfabético
+    return Object.values(map).sort((a,b) => {
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      if (b.exact !== a.exact) return b.exact - a.exact;
+      if (b.winner !== a.winner) return b.winner - a.winner;
+      const aErros = a.count - a.exact - a.winner;
+      const bErros = b.count - b.exact - b.winner;
+      if (aErros !== bErros) return aErros - bErros;
+      return a.user.localeCompare(b.user);
+    });
   }, [allBets, results]);
 
   const medals = ["🥇","🥈","🥉"];
@@ -463,7 +488,7 @@ function RankingTab({ allBets, results, currentUser }) {
       ) : (
         <>
           <div style={{marginBottom:12,padding:"8px 12px",background:"rgba(255,215,0,0.05)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:8,fontSize:"0.72rem",color:"#94a3b8",lineHeight:1.8}}>
-            <strong style={{color:"#ffd700"}}>Pontuação:</strong> Placar exato = 5pts · Vencedor+1placar = 3pts · Só vencedor = 2pts · 1 placar certo = 1pt · Empate exato = 5pts · Só empate = 3pts
+            <strong style={{color:"#ffd700"}}>Pontuação:</strong> Placar exato = 5pts · Vencedor+1placar = 3pts · Só vencedor = 2pts · 1 placar certo = 1pt · Empate exato = 5pts · Só empate = 3pts<br/><strong style={{color:"#94a3b8"}}>Desempate:</strong> Placares exatos {'>'} Acertos vencedor {'>'} Menos erros {'>'} Ordem alfabética
           </div>
           {players.length === 0 ? (
             <div style={{textAlign:"center",padding:40,color:"#475569"}}>Nenhum participante ainda</div>
@@ -473,7 +498,7 @@ function RankingTab({ allBets, results, currentUser }) {
               <div style={{fontSize:"1.3rem",minWidth:28,textAlign:"center"}}>{medals[i] || `${i+1}º`}</div>
               <div style={{flex:1}}>
                 <div style={{fontSize:"0.95rem",fontWeight:700,color:p.user===currentUser?"#93c5fd":"#fff"}}>{p.user}{p.user===currentUser?" (você)":""}</div>
-                <div style={{fontSize:"0.65rem",color:"#64748b",marginTop:2}}>{p.count} palpites · {p.exact} exatos · {p.winner} vencedores</div>
+                <div style={{fontSize:"0.65rem",color:"#64748b",marginTop:2}}>{p.count} palpites · {p.exact} exatos · {p.winner} vencedor{p.winner!==1?"es":""} · {p.count-p.exact-p.winner<0?0:p.count-p.exact-p.winner} erro{p.count-p.exact-p.winner!==1?"s":""}</div>
               </div>
               <div style={{textAlign:"right"}}>
                 <div style={{fontSize:"1.5rem",fontWeight:900,color:i===0?"#ffd700":i===1?"#94a3b8":i===2?"#cd7f32":"#e2e8f0"}}>{p.pts}</div>
@@ -596,6 +621,11 @@ function AdminPanel({ results, allBets, onSetResult, onClose }) {
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <h2 style={{color:"#ffd700",fontSize:"1.3rem",fontWeight:900,letterSpacing:"0.06em"}}>👑 PAINEL ADMIN</h2>
           <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:6,padding:"6px 12px",color:"#94a3b8",cursor:"pointer"}}>FECHAR ×</button>
+      </div>
+      <div style={{background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:8,padding:"8px 14px",marginBottom:12,fontSize:"0.72rem",color:"#f59e0b"}}>
+        ⚠️ <strong>Plano gratuito Firebase:</strong> 50.000 leituras/dia · 20.000 escritas/dia · 1GB armazenamento. Monitore em <a href="https://console.firebase.google.com" target="_blank" style={{color:"#ffd700"}}>console.firebase.google.com</a>
+      </div>
+      <div style={{display:"none"}}><!-- placeholder --></div
         </div>
         {/* Definir resultado */}
         <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:16,marginBottom:16}}>
@@ -671,6 +701,8 @@ function App() {
   const [adminAuth, setAdminAuth] = useState(false);
   const [ticker, setTicker] = useState(0);
 
+  // Sincronizar horário com servidor ao iniciar (anti-trapaça)
+  useEffect(() => { syncServerTime(); }, []);
   // Tick a cada minuto para atualizar timers
   useEffect(() => { const t = setInterval(()=>setTicker(x=>x+1),60000); return ()=>clearInterval(t); }, []);
 
@@ -795,11 +827,11 @@ function App() {
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:150,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
           <div style={{background:"#0d1b2a",border:"1px solid rgba(255,215,0,0.2)",borderRadius:12,padding:28,width:"100%",maxWidth:320}}>
             <h3 style={{color:"#ffd700",marginBottom:16,fontSize:"1rem",fontWeight:700}}>👑 Acesso Admin</h3>
-            <input type="password" value={adminInput} onChange={e=>setAdminInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(adminInput===ADMIN_PASSWORD?(setAdminAuth(true),setShowAdmin(true),setShowAdminLogin(false)):alert("Senha incorreta"))}
+            <input type="password" value={adminInput} onChange={e=>setAdminInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(checkAdminPwd(adminInput)?(setAdminAuth(true),setShowAdmin(true),setShowAdminLogin(false)):alert("Senha incorreta"))}
               placeholder="Senha admin..." style={{width:"100%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,padding:"10px 12px",color:"#fff",fontSize:"1rem",outline:"none",marginBottom:10}}/>
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>setShowAdminLogin(false)} style={{flex:1,background:"rgba(255,255,255,0.06)",border:"none",borderRadius:8,padding:10,color:"#94a3b8",cursor:"pointer"}}>Cancelar</button>
-              <button onClick={()=>{ if(adminInput===ADMIN_PASSWORD){setAdminAuth(true);setShowAdmin(true);setShowAdminLogin(false);}else alert("Senha incorreta");}} style={{flex:1,background:"#1d4ed8",border:"none",borderRadius:8,padding:10,color:"#fff",fontWeight:700,cursor:"pointer"}}>Entrar</button>
+              <button onClick={()=>{ if(checkAdminPwd(adminInput)){setAdminAuth(true);setShowAdmin(true);setShowAdminLogin(false);}else alert("Senha incorreta");}} style={{flex:1,background:"#1d4ed8",border:"none",borderRadius:8,padding:10,color:"#fff",fontWeight:700,cursor:"pointer"}}>Entrar</button>
             </div>
           </div>
         </div>

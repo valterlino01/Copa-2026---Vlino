@@ -1,682 +1,817 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Copa 2026" />
-  <meta name="theme-color" content="#0a0f1e" />
-  <title>⚽ Copa do Mundo 2026</title>
-  <link rel="manifest" href="manifest.json" />
-
-  <!-- PWA icons -->
-  <link rel="apple-touch-icon" href="icon.svg" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg" />
-
-  <!-- React + Babel -->
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Bolão 2026"/>
+  <meta name="theme-color" content="#0a0f1e"/>
+  <title>⚽ Bolão Copa 2026</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon.svg"/>
+  <link rel="icon" type="image/svg+xml" href="icon.svg"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
-    html, body, #root { margin: 0; padding: 0; height: 100%; background: #0a0f1e; }
-    body { overscroll-behavior: none; }
+    html,body,#root{margin:0;padding:0;height:100%;background:#0a0f1e;}
+    body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button{opacity:1;}
   </style>
 </head>
 <body>
-  <div id="root"></div>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
-  <script type="text/babel" data-presets="react">
-// destructure hooks
-const { useState, useEffect, useCallback } = React;
-
-
-// ─── DADOS DA TABELA ────────────────────────────────────────────────────────
-const SCHEDULE = [
-  // Fase de Grupos
-  { id: 1, date: "2026-06-11", time: "16:00", home: "México", homeFlag: "🇲🇽", away: "África do Sul", awayFlag: "🇿🇦", group: "A", phase: "Grupos" },
-  { id: 2, date: "2026-06-11", time: "23:00", home: "Coreia do Sul", homeFlag: "🇰🇷", away: "Tchéquia/Dinamarca", awayFlag: "🇨🇿🇩🇰", group: "A", phase: "Grupos" },
-  { id: 3, date: "2026-06-12", time: "16:00", home: "Canadá", homeFlag: "🇨🇦", away: "Bósnia/Itália", awayFlag: "🇧🇦🇮🇹", group: "B", phase: "Grupos" },
-  { id: 4, date: "2026-06-12", time: "22:00", home: "Estados Unidos", homeFlag: "🇺🇸", away: "Paraguai", awayFlag: "🇵🇾", group: "D", phase: "Grupos" },
-  { id: 5, date: "2026-06-13", time: "16:00", home: "Qatar", homeFlag: "🇶🇦", away: "Suíça", awayFlag: "🇨🇭", group: "B", phase: "Grupos" },
-  { id: 6, date: "2026-06-13", time: "19:00", home: "Brasil", homeFlag: "🇧🇷", away: "Marrocos", awayFlag: "🇲🇦", group: "C", phase: "Grupos", featured: true },
-  { id: 7, date: "2026-06-13", time: "22:00", home: "Haiti", homeFlag: "🇭🇹", away: "Escócia", awayFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", group: "C", phase: "Grupos" },
-  { id: 8, date: "2026-06-14", time: "01:00", home: "Austrália", homeFlag: "🇦🇺", away: "Kosovo/Turquia", awayFlag: "🇽🇰🇹🇷", group: "D", phase: "Grupos" },
-  { id: 9, date: "2026-06-14", time: "14:00", home: "Alemanha", homeFlag: "🇩🇪", away: "Curaçao", awayFlag: "🇨🇼", group: "E", phase: "Grupos" },
-  { id: 10, date: "2026-06-14", time: "17:00", home: "Holanda", homeFlag: "🇳🇱", away: "Japão", awayFlag: "🇯🇵", group: "F", phase: "Grupos" },
-  { id: 11, date: "2026-06-14", time: "20:00", home: "Costa do Marfim", homeFlag: "🇨🇮", away: "Equador", awayFlag: "🇪🇨", group: "E", phase: "Grupos" },
-  { id: 12, date: "2026-06-14", time: "23:00", home: "Polônia/Suécia", homeFlag: "🇵🇱🇸🇪", away: "Tunísia", awayFlag: "🇹🇳", group: "F", phase: "Grupos" },
-  { id: 13, date: "2026-06-15", time: "13:00", home: "Espanha", homeFlag: "🇪🇸", away: "Cabo Verde", awayFlag: "🇨🇻", group: "H", phase: "Grupos" },
-  { id: 14, date: "2026-06-15", time: "16:00", home: "Bélgica", homeFlag: "🇧🇪", away: "Egito", awayFlag: "🇪🇬", group: "G", phase: "Grupos" },
-  { id: 15, date: "2026-06-15", time: "19:00", home: "Arábia Saudita", homeFlag: "🇸🇦", away: "Uruguai", awayFlag: "🇺🇾", group: "H", phase: "Grupos" },
-  { id: 16, date: "2026-06-15", time: "22:00", home: "Irã", homeFlag: "🇮🇷", away: "Nova Zelândia", awayFlag: "🇳🇿", group: "G", phase: "Grupos" },
-  { id: 17, date: "2026-06-16", time: "16:00", home: "França", homeFlag: "🇫🇷", away: "Senegal", awayFlag: "🇸🇳", group: "I", phase: "Grupos" },
-  { id: 18, date: "2026-06-16", time: "19:00", home: "Bolívia/Iraque", homeFlag: "🇧🇴🇮🇶", away: "Noruega", awayFlag: "🇳🇴", group: "I", phase: "Grupos" },
-  { id: 19, date: "2026-06-16", time: "22:00", home: "Argentina", homeFlag: "🇦🇷", away: "Argélia", awayFlag: "🇩🇿", group: "J", phase: "Grupos", featured: true },
-  { id: 20, date: "2026-06-17", time: "01:00", home: "Áustria", homeFlag: "🇦🇹", away: "Jordânia", awayFlag: "🇯🇴", group: "J", phase: "Grupos" },
-  { id: 21, date: "2026-06-17", time: "14:00", home: "Portugal", homeFlag: "🇵🇹", away: "RD Congo/Jamaica/N.Caledônia", awayFlag: "🇨🇩🇯🇲🇳🇨", group: "K", phase: "Grupos" },
-  { id: 22, date: "2026-06-17", time: "17:00", home: "Inglaterra", homeFlag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", away: "Croácia", awayFlag: "🇭🇷", group: "L", phase: "Grupos" },
-  { id: 23, date: "2026-06-17", time: "20:30", home: "Gana", homeFlag: "🇬🇭", away: "Panamá", awayFlag: "🇵🇦", group: "L", phase: "Grupos" },
-  { id: 24, date: "2026-06-17", time: "23:00", home: "Uzbequistão", homeFlag: "🇺🇿", away: "Colômbia", awayFlag: "🇨🇴", group: "K", phase: "Grupos" },
-  { id: 25, date: "2026-06-18", time: "13:00", home: "Tchéquia/Dinamarca", homeFlag: "🇨🇿🇩🇰", away: "África do Sul", awayFlag: "🇿🇦", group: "A", phase: "Grupos" },
-  { id: 26, date: "2026-06-18", time: "16:00", home: "Suíça", homeFlag: "🇨🇭", away: "Bósnia/Itália", awayFlag: "🇧🇦🇮🇹", group: "B", phase: "Grupos" },
-  { id: 27, date: "2026-06-18", time: "19:00", home: "Canadá", homeFlag: "🇨🇦", away: "Qatar", awayFlag: "🇶🇦", group: "B", phase: "Grupos" },
-  { id: 28, date: "2026-06-18", time: "22:00", home: "México", homeFlag: "🇲🇽", away: "Coreia do Sul", awayFlag: "🇰🇷", group: "A", phase: "Grupos" },
-  { id: 29, date: "2026-06-19", time: "16:00", home: "Estados Unidos", homeFlag: "🇺🇸", away: "Austrália", awayFlag: "🇦🇺", group: "D", phase: "Grupos" },
-  { id: 30, date: "2026-06-19", time: "19:00", home: "Escócia", homeFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", away: "Marrocos", awayFlag: "🇲🇦", group: "C", phase: "Grupos" },
-  { id: 31, date: "2026-06-19", time: "22:00", home: "Brasil", homeFlag: "🇧🇷", away: "Haiti", awayFlag: "🇭🇹", group: "C", phase: "Grupos", featured: true },
-  { id: 32, date: "2026-06-20", time: "01:00", home: "Kosovo/Turquia", homeFlag: "🇽🇰🇹🇷", away: "Paraguai", awayFlag: "🇵🇾", group: "D", phase: "Grupos" },
-  { id: 33, date: "2026-06-20", time: "14:00", home: "Holanda", homeFlag: "🇳🇱", away: "Polônia/Suécia", awayFlag: "🇵🇱🇸🇪", group: "F", phase: "Grupos" },
-  { id: 34, date: "2026-06-20", time: "17:00", home: "Alemanha", homeFlag: "🇩🇪", away: "Costa do Marfim", awayFlag: "🇨🇮", group: "E", phase: "Grupos" },
-  { id: 35, date: "2026-06-20", time: "21:00", home: "Equador", homeFlag: "🇪🇨", away: "Curaçao", awayFlag: "🇨🇼", group: "E", phase: "Grupos" },
-  { id: 36, date: "2026-06-21", time: "01:00", home: "Tunísia", homeFlag: "🇹🇳", away: "Japão", awayFlag: "🇯🇵", group: "F", phase: "Grupos" },
-  { id: 37, date: "2026-06-21", time: "13:00", home: "Espanha", homeFlag: "🇪🇸", away: "Arábia Saudita", awayFlag: "🇸🇦", group: "H", phase: "Grupos" },
-  { id: 38, date: "2026-06-21", time: "16:00", home: "Bélgica", homeFlag: "🇧🇪", away: "Irã", awayFlag: "🇮🇷", group: "G", phase: "Grupos" },
-  { id: 39, date: "2026-06-21", time: "19:00", home: "Uruguai", homeFlag: "🇺🇾", away: "Cabo Verde", awayFlag: "🇨🇻", group: "H", phase: "Grupos" },
-  { id: 40, date: "2026-06-21", time: "23:00", home: "Nova Zelândia", homeFlag: "🇳🇿", away: "Egito", awayFlag: "🇪🇬", group: "G", phase: "Grupos" },
-  { id: 41, date: "2026-06-22", time: "14:00", home: "Argentina", homeFlag: "🇦🇷", away: "Áustria", awayFlag: "🇦🇹", group: "J", phase: "Grupos", featured: true },
-  { id: 42, date: "2026-06-22", time: "18:00", home: "França", homeFlag: "🇫🇷", away: "Bolívia/Iraque", awayFlag: "🇧🇴🇮🇶", group: "I", phase: "Grupos" },
-  { id: 43, date: "2026-06-22", time: "21:00", home: "Noruega", homeFlag: "🇳🇴", away: "Senegal", awayFlag: "🇸🇳", group: "I", phase: "Grupos" },
-  { id: 44, date: "2026-06-23", time: "00:00", home: "Jordânia", homeFlag: "🇯🇴", away: "Argélia", awayFlag: "🇩🇿", group: "J", phase: "Grupos" },
-  { id: 45, date: "2026-06-23", time: "14:00", home: "Portugal", homeFlag: "🇵🇹", away: "Uzbequistão", awayFlag: "🇺🇿", group: "K", phase: "Grupos" },
-  { id: 46, date: "2026-06-23", time: "17:00", home: "Inglaterra", homeFlag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", away: "Gana", awayFlag: "🇬🇭", group: "L", phase: "Grupos" },
-  { id: 47, date: "2026-06-23", time: "20:00", home: "Panamá", homeFlag: "🇵🇦", away: "Croácia", awayFlag: "🇭🇷", group: "L", phase: "Grupos" },
-  { id: 48, date: "2026-06-23", time: "23:00", home: "Colômbia", homeFlag: "🇨🇴", away: "RD Congo/Jamaica/N.Caledônia", awayFlag: "🇨🇩🇯🇲🇳🇨", group: "K", phase: "Grupos" },
-  { id: 49, date: "2026-06-24", time: "16:00", home: "Suíça", homeFlag: "🇨🇭", away: "Canadá", awayFlag: "🇨🇦", group: "B", phase: "Grupos" },
-  { id: 50, date: "2026-06-24", time: "16:00", home: "Bósnia/Itália", homeFlag: "🇧🇦🇮🇹", away: "Qatar", awayFlag: "🇶🇦", group: "B", phase: "Grupos" },
-  { id: 51, date: "2026-06-24", time: "19:00", home: "Escócia", homeFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", away: "Brasil", awayFlag: "🇧🇷", group: "C", phase: "Grupos", featured: true },
-  { id: 52, date: "2026-06-24", time: "19:00", home: "Marrocos", homeFlag: "🇲🇦", away: "Haiti", awayFlag: "🇭🇹", group: "C", phase: "Grupos" },
-  { id: 53, date: "2026-06-24", time: "22:00", home: "Tchéquia/Dinamarca", homeFlag: "🇨🇿🇩🇰", away: "México", awayFlag: "🇲🇽", group: "A", phase: "Grupos" },
-  { id: 54, date: "2026-06-24", time: "22:00", home: "África do Sul", homeFlag: "🇿🇦", away: "Coreia do Sul", awayFlag: "🇰🇷", group: "A", phase: "Grupos" },
-  { id: 55, date: "2026-06-25", time: "17:00", home: "Curaçao", homeFlag: "🇨🇼", away: "Costa do Marfim", awayFlag: "🇨🇮", group: "E", phase: "Grupos" },
-  { id: 56, date: "2026-06-25", time: "17:00", home: "Equador", homeFlag: "🇪🇨", away: "Alemanha", awayFlag: "🇩🇪", group: "E", phase: "Grupos" },
-  { id: 57, date: "2026-06-25", time: "20:00", home: "Japão", homeFlag: "🇯🇵", away: "Polônia/Suécia", awayFlag: "🇵🇱🇸🇪", group: "F", phase: "Grupos" },
-  { id: 58, date: "2026-06-25", time: "20:00", home: "Tunísia", homeFlag: "🇹🇳", away: "Holanda", awayFlag: "🇳🇱", group: "F", phase: "Grupos" },
-  { id: 59, date: "2026-06-25", time: "23:00", home: "Kosovo/Turquia", homeFlag: "🇽🇰🇹🇷", away: "Estados Unidos", awayFlag: "🇺🇸", group: "D", phase: "Grupos" },
-  { id: 60, date: "2026-06-25", time: "23:00", home: "Paraguai", homeFlag: "🇵🇾", away: "Austrália", awayFlag: "🇦🇺", group: "D", phase: "Grupos" },
-  { id: 61, date: "2026-06-26", time: "16:00", home: "Noruega", homeFlag: "🇳🇴", away: "França", awayFlag: "🇫🇷", group: "I", phase: "Grupos" },
-  { id: 62, date: "2026-06-26", time: "16:00", home: "Senegal", homeFlag: "🇸🇳", away: "Bolívia/Iraque", awayFlag: "🇧🇴🇮🇶", group: "I", phase: "Grupos" },
-  { id: 63, date: "2026-06-26", time: "21:00", home: "Cabo Verde", homeFlag: "🇨🇻", away: "Arábia Saudita", awayFlag: "🇸🇦", group: "H", phase: "Grupos" },
-  { id: 64, date: "2026-06-26", time: "21:00", home: "Uruguai", homeFlag: "🇺🇾", away: "Espanha", awayFlag: "🇪🇸", group: "H", phase: "Grupos" },
-  { id: 65, date: "2026-06-26", time: "23:00", home: "Nova Zelândia", homeFlag: "🇳🇿", away: "Bélgica", awayFlag: "🇧🇪", group: "G", phase: "Grupos" },
-  { id: 66, date: "2026-06-27", time: "00:00", home: "Egito", homeFlag: "🇪🇬", away: "Irã", awayFlag: "🇮🇷", group: "G", phase: "Grupos" },
-  { id: 67, date: "2026-06-27", time: "18:00", home: "Panamá", homeFlag: "🇵🇦", away: "Inglaterra", awayFlag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", group: "L", phase: "Grupos" },
-  { id: 68, date: "2026-06-27", time: "18:00", home: "Croácia", homeFlag: "🇭🇷", away: "Gana", awayFlag: "🇬🇭", group: "L", phase: "Grupos" },
-  { id: 69, date: "2026-06-27", time: "20:30", home: "Colômbia", homeFlag: "🇨🇴", away: "Portugal", awayFlag: "🇵🇹", group: "K", phase: "Grupos" },
-  { id: 70, date: "2026-06-27", time: "20:30", home: "RD Congo/Jamaica/N.Caledônia", homeFlag: "🇨🇩🇯🇲🇳🇨", away: "Uzbequistão", awayFlag: "🇺🇿", group: "K", phase: "Grupos" },
-  { id: 71, date: "2026-06-27", time: "23:00", home: "Argélia", homeFlag: "🇩🇿", away: "Áustria", awayFlag: "🇦🇹", group: "J", phase: "Grupos" },
-  { id: 72, date: "2026-06-27", time: "23:00", home: "Jordânia", homeFlag: "🇯🇴", away: "Argentina", awayFlag: "🇦🇷", group: "J", phase: "Grupos", featured: true },
-  // Segunda fase
-  { id: 73, date: "2026-06-28", time: "16:00", home: "2º A", homeFlag: "🏆", away: "2º B", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 73 },
-  { id: 74, date: "2026-06-29", time: "17:30", home: "1º E", homeFlag: "🏆", away: "3º A/B/C/D/F", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 74 },
-  { id: 75, date: "2026-06-29", time: "22:00", home: "1º F", homeFlag: "🏆", away: "2º C", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 75 },
-  { id: 76, date: "2026-06-30", time: "14:00", home: "1º C", homeFlag: "🏆", away: "2º F", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 76 },
-  { id: 77, date: "2026-06-30", time: "18:00", home: "1º I", homeFlag: "🏆", away: "3º C/D/F/G/H", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 77 },
-  { id: 78, date: "2026-06-30", time: "14:00", home: "2º E", homeFlag: "🏆", away: "2º I", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 78 },
-  { id: 79, date: "2026-06-30", time: "22:00", home: "1º A", homeFlag: "🏆", away: "3º C/E/F/H/I", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 79 },
-  { id: 80, date: "2026-07-01", time: "13:00", home: "1º L", homeFlag: "🏆", away: "3º E/H/I/J/K", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 80 },
-  { id: 81, date: "2026-07-01", time: "21:00", home: "1º D", homeFlag: "🏆", away: "3º B/E/F/I/J", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 81 },
-  { id: 82, date: "2026-07-01", time: "17:00", home: "1º G", homeFlag: "🏆", away: "3º A/E/H/I/J", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 82 },
-  { id: 83, date: "2026-07-02", time: "20:00", home: "2º K", homeFlag: "🏆", away: "2º L", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 83 },
-  { id: 84, date: "2026-07-02", time: "16:00", home: "1º H", homeFlag: "🏆", away: "2º J", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 84 },
-  { id: 85, date: "2026-07-03", time: "00:00", home: "1º B", homeFlag: "🏆", away: "3º E/F/G/I/J", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 85 },
-  { id: 86, date: "2026-07-03", time: "19:00", home: "1º J", homeFlag: "🏆", away: "2º H", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 86 },
-  { id: 87, date: "2026-07-03", time: "22:30", home: "1º K", homeFlag: "🏆", away: "3º D/E/I/J/L", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 87 },
-  { id: 88, date: "2026-07-03", time: "15:00", home: "2º D", homeFlag: "🏆", away: "2º G", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 88 },
-  // Oitavas
-  { id: 89, date: "2026-07-04", time: "18:00", home: "Venc. 74", homeFlag: "🏆", away: "Venc. 77", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 89 },
-  { id: 90, date: "2026-07-04", time: "14:00", home: "Venc. 73", homeFlag: "🏆", away: "Venc. 75", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 90 },
-  { id: 91, date: "2026-07-05", time: "17:00", home: "Venc. 76", homeFlag: "🏆", away: "Venc. 78", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 91 },
-  { id: 92, date: "2026-07-05", time: "21:00", home: "Venc. 79", homeFlag: "🏆", away: "Venc. 80", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 92 },
-  { id: 93, date: "2026-07-06", time: "16:00", home: "Venc. 83", homeFlag: "🏆", away: "Venc. 84", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 93 },
-  { id: 94, date: "2026-07-06", time: "21:00", home: "Venc. 81", homeFlag: "🏆", away: "Venc. 82", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 94 },
-  { id: 95, date: "2026-07-07", time: "13:00", home: "Venc. 86", homeFlag: "🏆", away: "Venc. 88", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 95 },
-  { id: 96, date: "2026-07-07", time: "17:00", home: "Venc. 85", homeFlag: "🏆", away: "Venc. 87", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 96 },
-  // Quartas
-  { id: 97, date: "2026-07-09", time: "17:00", home: "Venc. 89", homeFlag: "🏆", away: "Venc. 90", awayFlag: "🏆", group: "-", phase: "Quartas", matchNum: 97 },
-  { id: 98, date: "2026-07-10", time: "16:00", home: "Venc. 93", homeFlag: "🏆", away: "Venc. 94", awayFlag: "🏆", group: "-", phase: "Quartas", matchNum: 98 },
-  { id: 99, date: "2026-07-10", time: "18:00", home: "Venc. 91", homeFlag: "🏆", away: "Venc. 92", awayFlag: "🏆", group: "-", phase: "Quartas", matchNum: 99 },
-  { id: 100, date: "2026-07-11", time: "22:00", home: "Venc. 95", homeFlag: "🏆", away: "Venc. 96", awayFlag: "🏆", group: "-", phase: "Quartas", matchNum: 100 },
-  // Semis
-  { id: 101, date: "2026-07-14", time: "16:00", home: "Venc. 97", homeFlag: "🏆", away: "Venc. 98", awayFlag: "🏆", group: "-", phase: "Semifinal", matchNum: 101 },
-  { id: 102, date: "2026-07-15", time: "16:00", home: "Venc. 99", homeFlag: "🏆", away: "Venc. 100", awayFlag: "🏆", group: "-", phase: "Semifinal", matchNum: 102 },
-  // 3º e Final
-  { id: 103, date: "2026-07-18", time: "18:00", home: "3º Lugar A", homeFlag: "🥉", away: "3º Lugar B", awayFlag: "🥉", group: "-", phase: "3º Lugar", matchNum: 103 },
-  { id: 104, date: "2026-07-19", time: "16:00", home: "Finalista A", homeFlag: "🏆", away: "Finalista B", awayFlag: "🏆", group: "-", phase: "Final", matchNum: 104 },
-];
-
-const PHASES = ["Todos", "Grupos", "2ª Fase", "Oitavas", "Quartas", "Semifinal", "3º Lugar", "Final"];
-const GROUPS = ["Todos", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-
-// ─── CACHE DE RESULTADOS ─────────────────────────────────────────────────────
-const STORAGE_KEY = "copa2026_results_v1";
-const loadCache = () => {
-  try { const d = window.storage; return {}; } catch { return {}; }
+// ══════════════════════════════════════════════════════
+// FIREBASE CONFIG — substitua com suas credenciais!
+// ══════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAtqQJ3ADVMScEFzcUO2yugiQdIwmdx910",
+  authDomain: "copa2026-vlino.firebaseapp.com",
+  projectId: "copa2026-vlino",
+  storageBucket: "copa2026-vlino.firebasestorage.app",
+  messagingSenderId: "412439889129",
+  appId: "1:412439889129:web:f54cba5eb277c441519c78"
 };
 
-// ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
-function Copa2026() {
-  const [results, setResults] = useState({});
-  const [loadingId, setLoadingId] = useState(null);
-  const [activePhase, setActivePhase] = useState("Todos");
-  const [activeGroup, setActiveGroup] = useState("Todos");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [view, setView] = useState("tabela"); // tabela | hoje
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [globalLoading, setGlobalLoading] = useState(false);
-  const [expandedId, setExpandedId] = useState(null);
+// ADMIN — troque pela sua senha
+const ADMIN_PASSWORD = "copa2026admin";
 
-  // Carregar do storage persistente ao montar
-  useEffect(() => {
-    const loadFromStorage = async () => {
-      try {
-        const stored = await window.storage.get(STORAGE_KEY);
-        if (stored?.value) {
-          const parsed = JSON.parse(stored.value);
-          setResults(parsed.results || {});
-          setLastUpdated(parsed.lastUpdated || null);
-        }
-      } catch {}
-    };
-    loadFromStorage();
-  }, []);
+let db = null;
+try {
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.firestore();
+} catch(e) { console.warn("Firebase não configurado:", e); }
 
-  const saveToStorage = async (newResults) => {
-    try {
-      await window.storage.set(STORAGE_KEY, JSON.stringify({
-        results: newResults,
-        lastUpdated: new Date().toISOString()
-      }));
-    } catch {}
+// ══════════════════════════════════════════════════════
+// TABELA DE JOGOS
+// ══════════════════════════════════════════════════════
+const SCHEDULE = [
+  {id:1,date:"2026-06-11",time:"16:00",home:"México",homeFlag:"🇲🇽",away:"África do Sul",awayFlag:"🇿🇦",group:"A",phase:"Grupos"},
+  {id:2,date:"2026-06-11",time:"23:00",home:"Coreia do Sul",homeFlag:"🇰🇷",away:"Tchéquia/Dinamarca",awayFlag:"🇨🇿",group:"A",phase:"Grupos"},
+  {id:3,date:"2026-06-12",time:"16:00",home:"Canadá",homeFlag:"🇨🇦",away:"Bósnia/Itália",awayFlag:"🇮🇹",group:"B",phase:"Grupos"},
+  {id:4,date:"2026-06-12",time:"22:00",home:"Estados Unidos",homeFlag:"🇺🇸",away:"Paraguai",awayFlag:"🇵🇾",group:"D",phase:"Grupos"},
+  {id:5,date:"2026-06-13",time:"16:00",home:"Qatar",homeFlag:"🇶🇦",away:"Suíça",awayFlag:"🇨🇭",group:"B",phase:"Grupos"},
+  {id:6,date:"2026-06-13",time:"19:00",home:"Brasil",homeFlag:"🇧🇷",away:"Marrocos",awayFlag:"🇲🇦",group:"C",phase:"Grupos",featured:true},
+  {id:7,date:"2026-06-13",time:"22:00",home:"Haiti",homeFlag:"🇭🇹",away:"Escócia",awayFlag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",group:"C",phase:"Grupos"},
+  {id:8,date:"2026-06-14",time:"01:00",home:"Austrália",homeFlag:"🇦🇺",away:"Kosovo/Turquia",awayFlag:"🇹🇷",group:"D",phase:"Grupos"},
+  {id:9,date:"2026-06-14",time:"14:00",home:"Alemanha",homeFlag:"🇩🇪",away:"Curaçao",awayFlag:"🇨🇼",group:"E",phase:"Grupos"},
+  {id:10,date:"2026-06-14",time:"17:00",home:"Holanda",homeFlag:"🇳🇱",away:"Japão",awayFlag:"🇯🇵",group:"F",phase:"Grupos"},
+  {id:11,date:"2026-06-14",time:"20:00",home:"Costa do Marfim",homeFlag:"🇨🇮",away:"Equador",awayFlag:"🇪🇨",group:"E",phase:"Grupos"},
+  {id:12,date:"2026-06-14",time:"23:00",home:"Polônia/Suécia",homeFlag:"🇵🇱",away:"Tunísia",awayFlag:"🇹🇳",group:"F",phase:"Grupos"},
+  {id:13,date:"2026-06-15",time:"13:00",home:"Espanha",homeFlag:"🇪🇸",away:"Cabo Verde",awayFlag:"🇨🇻",group:"H",phase:"Grupos"},
+  {id:14,date:"2026-06-15",time:"16:00",home:"Bélgica",homeFlag:"🇧🇪",away:"Egito",awayFlag:"🇪🇬",group:"G",phase:"Grupos"},
+  {id:15,date:"2026-06-15",time:"19:00",home:"Arábia Saudita",homeFlag:"🇸🇦",away:"Uruguai",awayFlag:"🇺🇾",group:"H",phase:"Grupos"},
+  {id:16,date:"2026-06-15",time:"22:00",home:"Irã",homeFlag:"🇮🇷",away:"Nova Zelândia",awayFlag:"🇳🇿",group:"G",phase:"Grupos"},
+  {id:17,date:"2026-06-16",time:"16:00",home:"França",homeFlag:"🇫🇷",away:"Senegal",awayFlag:"🇸🇳",group:"I",phase:"Grupos"},
+  {id:18,date:"2026-06-16",time:"19:00",home:"Bolívia/Iraque",homeFlag:"🇧🇴",away:"Noruega",awayFlag:"🇳🇴",group:"I",phase:"Grupos"},
+  {id:19,date:"2026-06-16",time:"22:00",home:"Argentina",homeFlag:"🇦🇷",away:"Argélia",awayFlag:"🇩🇿",group:"J",phase:"Grupos",featured:true},
+  {id:20,date:"2026-06-17",time:"01:00",home:"Áustria",homeFlag:"🇦🇹",away:"Jordânia",awayFlag:"🇯🇴",group:"J",phase:"Grupos"},
+  {id:21,date:"2026-06-17",time:"14:00",home:"Portugal",homeFlag:"🇵🇹",away:"RD Congo/Jamaica",awayFlag:"🇨🇩",group:"K",phase:"Grupos"},
+  {id:22,date:"2026-06-17",time:"17:00",home:"Inglaterra",homeFlag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",away:"Croácia",awayFlag:"🇭🇷",group:"L",phase:"Grupos"},
+  {id:23,date:"2026-06-17",time:"20:30",home:"Gana",homeFlag:"🇬🇭",away:"Panamá",awayFlag:"🇵🇦",group:"L",phase:"Grupos"},
+  {id:24,date:"2026-06-17",time:"23:00",home:"Uzbequistão",homeFlag:"🇺🇿",away:"Colômbia",awayFlag:"🇨🇴",group:"K",phase:"Grupos"},
+  {id:25,date:"2026-06-18",time:"13:00",home:"Tchéquia/Dinamarca",homeFlag:"🇨🇿",away:"África do Sul",awayFlag:"🇿🇦",group:"A",phase:"Grupos"},
+  {id:26,date:"2026-06-18",time:"16:00",home:"Suíça",homeFlag:"🇨🇭",away:"Bósnia/Itália",awayFlag:"🇮🇹",group:"B",phase:"Grupos"},
+  {id:27,date:"2026-06-18",time:"19:00",home:"Canadá",homeFlag:"🇨🇦",away:"Qatar",awayFlag:"🇶🇦",group:"B",phase:"Grupos"},
+  {id:28,date:"2026-06-18",time:"22:00",home:"México",homeFlag:"🇲🇽",away:"Coreia do Sul",awayFlag:"🇰🇷",group:"A",phase:"Grupos"},
+  {id:29,date:"2026-06-19",time:"16:00",home:"Estados Unidos",homeFlag:"🇺🇸",away:"Austrália",awayFlag:"🇦🇺",group:"D",phase:"Grupos"},
+  {id:30,date:"2026-06-19",time:"19:00",home:"Escócia",homeFlag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",away:"Marrocos",awayFlag:"🇲🇦",group:"C",phase:"Grupos"},
+  {id:31,date:"2026-06-19",time:"22:00",home:"Brasil",homeFlag:"🇧🇷",away:"Haiti",awayFlag:"🇭🇹",group:"C",phase:"Grupos",featured:true},
+  {id:32,date:"2026-06-20",time:"01:00",home:"Kosovo/Turquia",homeFlag:"🇹🇷",away:"Paraguai",awayFlag:"🇵🇾",group:"D",phase:"Grupos"},
+  {id:33,date:"2026-06-20",time:"14:00",home:"Holanda",homeFlag:"🇳🇱",away:"Polônia/Suécia",awayFlag:"🇵🇱",group:"F",phase:"Grupos"},
+  {id:34,date:"2026-06-20",time:"17:00",home:"Alemanha",homeFlag:"🇩🇪",away:"Costa do Marfim",awayFlag:"🇨🇮",group:"E",phase:"Grupos"},
+  {id:35,date:"2026-06-20",time:"21:00",home:"Equador",homeFlag:"🇪🇨",away:"Curaçao",awayFlag:"🇨🇼",group:"E",phase:"Grupos"},
+  {id:36,date:"2026-06-21",time:"01:00",home:"Tunísia",homeFlag:"🇹🇳",away:"Japão",awayFlag:"🇯🇵",group:"F",phase:"Grupos"},
+  {id:37,date:"2026-06-21",time:"13:00",home:"Espanha",homeFlag:"🇪🇸",away:"Arábia Saudita",awayFlag:"🇸🇦",group:"H",phase:"Grupos"},
+  {id:38,date:"2026-06-21",time:"16:00",home:"Bélgica",homeFlag:"🇧🇪",away:"Irã",awayFlag:"🇮🇷",group:"G",phase:"Grupos"},
+  {id:39,date:"2026-06-21",time:"19:00",home:"Uruguai",homeFlag:"🇺🇾",away:"Cabo Verde",awayFlag:"🇨🇻",group:"H",phase:"Grupos"},
+  {id:40,date:"2026-06-21",time:"23:00",home:"Nova Zelândia",homeFlag:"🇳🇿",away:"Egito",awayFlag:"🇪🇬",group:"G",phase:"Grupos"},
+  {id:41,date:"2026-06-22",time:"14:00",home:"Argentina",homeFlag:"🇦🇷",away:"Áustria",awayFlag:"🇦🇹",group:"J",phase:"Grupos",featured:true},
+  {id:42,date:"2026-06-22",time:"18:00",home:"França",homeFlag:"🇫🇷",away:"Bolívia/Iraque",awayFlag:"🇧🇴",group:"I",phase:"Grupos"},
+  {id:43,date:"2026-06-22",time:"21:00",home:"Noruega",homeFlag:"🇳🇴",away:"Senegal",awayFlag:"🇸🇳",group:"I",phase:"Grupos"},
+  {id:44,date:"2026-06-23",time:"00:00",home:"Jordânia",homeFlag:"🇯🇴",away:"Argélia",awayFlag:"🇩🇿",group:"J",phase:"Grupos"},
+  {id:45,date:"2026-06-23",time:"14:00",home:"Portugal",homeFlag:"🇵🇹",away:"Uzbequistão",awayFlag:"🇺🇿",group:"K",phase:"Grupos"},
+  {id:46,date:"2026-06-23",time:"17:00",home:"Inglaterra",homeFlag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",away:"Gana",awayFlag:"🇬🇭",group:"L",phase:"Grupos"},
+  {id:47,date:"2026-06-23",time:"20:00",home:"Panamá",homeFlag:"🇵🇦",away:"Croácia",awayFlag:"🇭🇷",group:"L",phase:"Grupos"},
+  {id:48,date:"2026-06-23",time:"23:00",home:"Colômbia",homeFlag:"🇨🇴",away:"RD Congo/Jamaica",awayFlag:"🇨🇩",group:"K",phase:"Grupos"},
+  {id:49,date:"2026-06-24",time:"16:00",home:"Suíça",homeFlag:"🇨🇭",away:"Canadá",awayFlag:"🇨🇦",group:"B",phase:"Grupos"},
+  {id:50,date:"2026-06-24",time:"16:00",home:"Bósnia/Itália",homeFlag:"🇮🇹",away:"Qatar",awayFlag:"🇶🇦",group:"B",phase:"Grupos"},
+  {id:51,date:"2026-06-24",time:"19:00",home:"Escócia",homeFlag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",away:"Brasil",awayFlag:"🇧🇷",group:"C",phase:"Grupos",featured:true},
+  {id:52,date:"2026-06-24",time:"19:00",home:"Marrocos",homeFlag:"🇲🇦",away:"Haiti",awayFlag:"🇭🇹",group:"C",phase:"Grupos"},
+  {id:53,date:"2026-06-24",time:"22:00",home:"Tchéquia/Dinamarca",homeFlag:"🇨🇿",away:"México",awayFlag:"🇲🇽",group:"A",phase:"Grupos"},
+  {id:54,date:"2026-06-24",time:"22:00",home:"África do Sul",homeFlag:"🇿🇦",away:"Coreia do Sul",awayFlag:"🇰🇷",group:"A",phase:"Grupos"},
+  {id:55,date:"2026-06-25",time:"17:00",home:"Curaçao",homeFlag:"🇨🇼",away:"Costa do Marfim",awayFlag:"🇨🇮",group:"E",phase:"Grupos"},
+  {id:56,date:"2026-06-25",time:"17:00",home:"Equador",homeFlag:"🇪🇨",away:"Alemanha",awayFlag:"🇩🇪",group:"E",phase:"Grupos"},
+  {id:57,date:"2026-06-25",time:"20:00",home:"Japão",homeFlag:"🇯🇵",away:"Polônia/Suécia",awayFlag:"🇵🇱",group:"F",phase:"Grupos"},
+  {id:58,date:"2026-06-25",time:"20:00",home:"Tunísia",homeFlag:"🇹🇳",away:"Holanda",awayFlag:"🇳🇱",group:"F",phase:"Grupos"},
+  {id:59,date:"2026-06-25",time:"23:00",home:"Kosovo/Turquia",homeFlag:"🇹🇷",away:"Estados Unidos",awayFlag:"🇺🇸",group:"D",phase:"Grupos"},
+  {id:60,date:"2026-06-25",time:"23:00",home:"Paraguai",homeFlag:"🇵🇾",away:"Austrália",awayFlag:"🇦🇺",group:"D",phase:"Grupos"},
+  {id:61,date:"2026-06-26",time:"16:00",home:"Noruega",homeFlag:"🇳🇴",away:"França",awayFlag:"🇫🇷",group:"I",phase:"Grupos"},
+  {id:62,date:"2026-06-26",time:"16:00",home:"Senegal",homeFlag:"🇸🇳",away:"Bolívia/Iraque",awayFlag:"🇧🇴",group:"I",phase:"Grupos"},
+  {id:63,date:"2026-06-26",time:"21:00",home:"Cabo Verde",homeFlag:"🇨🇻",away:"Arábia Saudita",awayFlag:"🇸🇦",group:"H",phase:"Grupos"},
+  {id:64,date:"2026-06-26",time:"21:00",home:"Uruguai",homeFlag:"🇺🇾",away:"Espanha",awayFlag:"🇪🇸",group:"H",phase:"Grupos"},
+  {id:65,date:"2026-06-26",time:"23:00",home:"Nova Zelândia",homeFlag:"🇳🇿",away:"Bélgica",awayFlag:"🇧🇪",group:"G",phase:"Grupos"},
+  {id:66,date:"2026-06-27",time:"00:00",home:"Egito",homeFlag:"🇪🇬",away:"Irã",awayFlag:"🇮🇷",group:"G",phase:"Grupos"},
+  {id:67,date:"2026-06-27",time:"18:00",home:"Panamá",homeFlag:"🇵🇦",away:"Inglaterra",awayFlag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",group:"L",phase:"Grupos"},
+  {id:68,date:"2026-06-27",time:"18:00",home:"Croácia",homeFlag:"🇭🇷",away:"Gana",awayFlag:"🇬🇭",group:"L",phase:"Grupos"},
+  {id:69,date:"2026-06-27",time:"20:30",home:"Colômbia",homeFlag:"🇨🇴",away:"Portugal",awayFlag:"🇵🇹",group:"K",phase:"Grupos"},
+  {id:70,date:"2026-06-27",time:"20:30",home:"RD Congo/Jamaica",homeFlag:"🇨🇩",away:"Uzbequistão",awayFlag:"🇺🇿",group:"K",phase:"Grupos"},
+  {id:71,date:"2026-06-27",time:"23:00",home:"Argélia",homeFlag:"🇩🇿",away:"Áustria",awayFlag:"🇦🇹",group:"J",phase:"Grupos"},
+  {id:72,date:"2026-06-27",time:"23:00",home:"Jordânia",homeFlag:"🇯🇴",away:"Argentina",awayFlag:"🇦🇷",group:"J",phase:"Grupos",featured:true},
+  {id:73,date:"2026-06-28",time:"16:00",home:"2º A",homeFlag:"🏆",away:"2º B",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:73},
+  {id:74,date:"2026-06-29",time:"17:30",home:"1º E",homeFlag:"🏆",away:"3º ABCDF",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:74},
+  {id:75,date:"2026-06-29",time:"22:00",home:"1º F",homeFlag:"🏆",away:"2º C",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:75},
+  {id:76,date:"2026-06-30",time:"14:00",home:"1º C",homeFlag:"🏆",away:"2º F",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:76},
+  {id:77,date:"2026-06-30",time:"18:00",home:"1º I",homeFlag:"🏆",away:"3º CDFGH",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:77},
+  {id:78,date:"2026-06-30",time:"14:00",home:"2º E",homeFlag:"🏆",away:"2º I",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:78},
+  {id:79,date:"2026-06-30",time:"22:00",home:"1º A",homeFlag:"🏆",away:"3º CEFHI",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:79},
+  {id:80,date:"2026-07-01",time:"13:00",home:"1º L",homeFlag:"🏆",away:"3º EHIJK",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:80},
+  {id:81,date:"2026-07-01",time:"21:00",home:"1º D",homeFlag:"🏆",away:"3º BEFIJ",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:81},
+  {id:82,date:"2026-07-01",time:"17:00",home:"1º G",homeFlag:"🏆",away:"3º AEHIJ",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:82},
+  {id:83,date:"2026-07-02",time:"20:00",home:"2º K",homeFlag:"🏆",away:"2º L",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:83},
+  {id:84,date:"2026-07-02",time:"16:00",home:"1º H",homeFlag:"🏆",away:"2º J",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:84},
+  {id:85,date:"2026-07-03",time:"00:00",home:"1º B",homeFlag:"🏆",away:"3º EFGIJ",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:85},
+  {id:86,date:"2026-07-03",time:"19:00",home:"1º J",homeFlag:"🏆",away:"2º H",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:86},
+  {id:87,date:"2026-07-03",time:"22:30",home:"1º K",homeFlag:"🏆",away:"3º DEIJL",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:87},
+  {id:88,date:"2026-07-03",time:"15:00",home:"2º D",homeFlag:"🏆",away:"2º G",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:88},
+  {id:89,date:"2026-07-04",time:"18:00",home:"Venc. 74",homeFlag:"🏆",away:"Venc. 77",awayFlag:"🏆",group:"-",phase:"Oitavas",matchNum:89},
+  {id:90,date:"2026-07-04",time:"14:00",home:"Venc. 73",homeFlag:"🏆",away:"Venc. 75",awayFlag:"🏆",group:"-",phase:"Oitavas",matchNum:90},
+  {id:91,date:"2026-07-05",time:"17:00",home:"Venc. 76",homeFlag:"🏆",away:"Venc. 78",awayFlag:"🏆",group:"-",phase:"Oitavas",matchNum:91},
+  {id:92,date:"2026-07-05",time:"21:00",home:"Venc. 79",homeFlag:"🏆",away:"Venc. 80",awayFlag:"🏆",group:"-",phase:"Oitavas",matchNum:92},
+  {id:93,date:"2026-07-06",time:"16:00",home:"Venc. 83",homeFlag:"🏆",away:"Venc. 84",awayFlag:"🏆",group:"-",phase:"Oitavas",matchNum:93},
+  {id:94,date:"2026-07-06",time:"21:00",home:"Venc. 81",homeFlag:"🏆",away:"Venc. 82",awayFlag:"🏆",group:"-",phase:"Oitavas",matchNum:94},
+  {id:95,date:"2026-07-07",time:"13:00",home:"Venc. 86",homeFlag:"🏆",away:"Venc. 88",awayFlag:"🏆",group:"-",phase:"Oitavas",matchNum:95},
+  {id:96,date:"2026-07-07",time:"17:00",home:"Venc. 85",homeFlag:"🏆",away:"Venc. 87",awayFlag:"🏆",group:"-",phase:"Oitavas",matchNum:96},
+  {id:97,date:"2026-07-09",time:"17:00",home:"Venc. 89",homeFlag:"🏆",away:"Venc. 90",awayFlag:"🏆",group:"-",phase:"Quartas",matchNum:97},
+  {id:98,date:"2026-07-10",time:"16:00",home:"Venc. 93",homeFlag:"🏆",away:"Venc. 94",awayFlag:"🏆",group:"-",phase:"Quartas",matchNum:98},
+  {id:99,date:"2026-07-10",time:"18:00",home:"Venc. 91",homeFlag:"🏆",away:"Venc. 92",awayFlag:"🏆",group:"-",phase:"Quartas",matchNum:99},
+  {id:100,date:"2026-07-11",time:"22:00",home:"Venc. 95",homeFlag:"🏆",away:"Venc. 96",awayFlag:"🏆",group:"-",phase:"Quartas",matchNum:100},
+  {id:101,date:"2026-07-14",time:"16:00",home:"Venc. 97",homeFlag:"🏆",away:"Venc. 98",awayFlag:"🏆",group:"-",phase:"Semifinal",matchNum:101},
+  {id:102,date:"2026-07-15",time:"16:00",home:"Venc. 99",homeFlag:"🏆",away:"Venc. 100",awayFlag:"🏆",group:"-",phase:"Semifinal",matchNum:102},
+  {id:103,date:"2026-07-18",time:"18:00",home:"3º Lugar A",homeFlag:"🥉",away:"3º Lugar B",awayFlag:"🥉",group:"-",phase:"3º Lugar",matchNum:103},
+  {id:104,date:"2026-07-19",time:"16:00",home:"Finalista A",homeFlag:"🏆",away:"Finalista B",awayFlag:"🏆",group:"-",phase:"Final",matchNum:104},
+];
+
+// ══════════════════════════════════════════════════════
+// PONTUAÇÃO
+// ══════════════════════════════════════════════════════
+function calcScore(guess, actual) {
+  if (!actual || actual.homeScore === null || actual.awayScore === null) return null;
+  if (guess.homeScore === null || guess.awayScore === null) return 0;
+  const gH = parseInt(guess.homeScore), gA = parseInt(guess.awayScore);
+  const aH = parseInt(actual.homeScore), aA = parseInt(actual.awayScore);
+  const gWinner = gH > gA ? 'home' : gH < gA ? 'away' : 'draw';
+  const aWinner = aH > aA ? 'home' : aH < aA ? 'away' : 'draw';
+  const exactHome = gH === aH, exactAway = gA === aA;
+  const exactBoth = exactHome && exactAway;
+  const correctWinner = gWinner === aWinner;
+
+  if (aWinner === 'draw') {
+    if (exactBoth) return { points: 5, label: "Placar exato (empate)" };
+    if (correctWinner) return { points: 3, label: "Acertou empate" };
+    return { points: 0, label: "Errou" };
+  }
+  // jogo com vencedor
+  if (exactBoth) return { points: 5, label: "Placar exato completo!" };
+  if (correctWinner && (exactHome || exactAway)) return { points: 3, label: "Vencedor + 1 placar" };
+  if (correctWinner) return { points: 2, label: "Acertou vencedor" };
+  if (exactHome || exactAway) return { points: 1, label: "1 placar correto" };
+  return { points: 0, label: "Errou" };
+}
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+function getMatchDateTime(m) {
+  const [h, min] = m.time.split(":").map(Number);
+  const d = new Date(m.date + "T00:00:00-03:00");
+  d.setHours(d.getHours() + h);
+  d.setMinutes(d.getMinutes() + min);
+  return d;
+}
+function isLocked(m) {
+  return new Date() >= new Date(getMatchDateTime(m).getTime() - 30 * 60000);
+}
+function minsToLock(m) {
+  const diff = getMatchDateTime(m).getTime() - 30*60000 - Date.now();
+  return Math.max(0, Math.floor(diff / 60000));
+}
+function formatDate(ds) {
+  const d = new Date(ds + "T12:00:00");
+  return d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","").toUpperCase();
+}
+function fmtTime(iso) {
+  return new Date(iso).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+}
+
+const PHASE_COLORS = {
+  "Grupos":"#3b82f6","2ª Fase":"#8b5cf6","Oitavas":"#f59e0b",
+  "Quartas":"#ef4444","Semifinal":"#ec4899","3º Lugar":"#6b7280","Final":"#ffd700"
+};
+
+// ══════════════════════════════════════════════════════
+// TELA DE LOGIN
+// ══════════════════════════════════════════════════════
+function LoginScreen({ onLogin }) {
+  const [name, setName] = useState("");
+  const [err, setErr] = useState("");
+  const handleLogin = () => {
+    const n = name.trim();
+    if (n.length < 2) { setErr("Nome deve ter pelo menos 2 caracteres"); return; }
+    if (n.length > 20) { setErr("Nome deve ter no máximo 20 caracteres"); return; }
+    onLogin(n);
   };
+  return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#0a0f1e,#0d1b2a,#071a0d)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Barlow Condensed',Arial Narrow,sans-serif"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&display=swap');*{box-sizing:border-box}`}</style>
+      <div style={{fontSize:"4rem",marginBottom:8}}>⚽</div>
+      <h1 style={{fontSize:"2.2rem",fontWeight:900,color:"#ffd700",letterSpacing:"0.06em",marginBottom:4,textAlign:"center"}}>BOLÃO COPA 2026</h1>
+      <p style={{color:"#64748b",fontSize:"0.85rem",marginBottom:32,letterSpacing:"0.08em"}}>EUA · CANADÁ · MÉXICO</p>
+      <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:28,width:"100%",maxWidth:360}}>
+        <p style={{color:"#94a3b8",fontSize:"0.9rem",marginBottom:16,letterSpacing:"0.04em"}}>Digite seu apelido para entrar</p>
+        <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()}
+          placeholder="Ex: Valter, Campeão..."
+          style={{width:"100%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,padding:"12px 14px",color:"#fff",fontSize:"1.1rem",fontFamily:"'Barlow Condensed',sans-serif",outline:"none",marginBottom:8}}/>
+        {err && <p style={{color:"#ef4444",fontSize:"0.78rem",marginBottom:8}}>{err}</p>}
+        <button onClick={handleLogin} style={{width:"100%",background:"linear-gradient(135deg,#1d4ed8,#059669)",border:"none",borderRadius:8,padding:"12px",color:"#fff",fontSize:"1rem",fontWeight:700,letterSpacing:"0.08em",cursor:"pointer",marginTop:4}}>
+          ENTRAR NO BOLÃO →
+        </button>
+      </div>
+      <p style={{color:"#334155",fontSize:"0.72rem",marginTop:20,textAlign:"center",maxWidth:300}}>Apenas o apelido é salvo. Sem senha, sem dados pessoais.</p>
+    </div>
+  );
+}
 
-  const fetchResult = useCallback(async (match) => {
-    setLoadingId(match.id);
-    const prompt = `Você é um assistente especializado em futebol. Acesse o site cazé.tv ou cazetv.com.br e busque o resultado do seguinte jogo da Copa do Mundo 2026:
-    
-    ${match.home} x ${match.away}
-    Data: ${match.date} às ${match.time} (horário de Brasília)
-    Fase: ${match.phase} ${match.group !== "-" ? `- Grupo ${match.group}` : ""}
-    
-    Responda SOMENTE com JSON válido no formato abaixo. Se o jogo ainda não aconteceu ou você não encontrou o resultado, retorne status "pending". Se aconteceu, retorne status "finished" com o placar. Se estiver em andamento, status "live".
-    
-    {
-      "status": "pending" | "finished" | "live",
-      "homeScore": número ou null,
-      "awayScore": número ou null,
-      "extra": "texto opcional com pênaltis, prorrogação, artilheiro etc ou null",
-      "source": "cazetv" ou "não encontrado"
-    }
-    
-    Responda APENAS com o JSON, sem markdown, sem explicações.`;
-
-    try {
-      const resp = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          tools: [{ type: "web_search_20250305", name: "web_search" }],
-          messages: [{ role: "user", content: prompt }]
-        })
-      });
-      const data = await resp.json();
-      const textBlock = data.content?.find(b => b.type === "text");
-      if (textBlock?.text) {
-        const clean = textBlock.text.replace(/```json|```/g, "").trim();
-        const parsed = JSON.parse(clean);
-        const updated = { ...results, [match.id]: { ...parsed, fetchedAt: new Date().toISOString() } };
-        setResults(updated);
-        setLastUpdated(new Date().toISOString());
-        await saveToStorage(updated);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingId(null);
-    }
-  }, [results]);
-
-  const fetchAllRecent = useCallback(async () => {
-    setGlobalLoading(true);
-    const today = new Date();
-    const recent = SCHEDULE.filter(m => {
-      const d = new Date(m.date + "T" + m.time.replace(":", ":") + ":00-03:00");
-      const diff = (today - d) / 3600000;
-      return diff > -1 && diff < 48;
-    });
-
-    for (const match of recent) {
-      setLoadingId(match.id);
-      const prompt = `Copa do Mundo 2026 resultado: ${match.home} x ${match.away} em ${match.date} às ${match.time} BRT. Fase: ${match.phase}. Responda SOMENTE JSON: {"status":"pending"|"finished"|"live","homeScore":número|null,"awayScore":número|null,"extra":string|null,"source":string}`;
-      try {
-        const resp = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 500,
-            tools: [{ type: "web_search_20250305", name: "web_search" }],
-            messages: [{ role: "user", content: prompt }]
-          })
-        });
-        const data = await resp.json();
-        const textBlock = data.content?.find(b => b.type === "text");
-        if (textBlock?.text) {
-          const clean = textBlock.text.replace(/```json|```/g, "").trim();
-          const parsed = JSON.parse(clean);
-          setResults(prev => {
-            const updated = { ...prev, [match.id]: { ...parsed, fetchedAt: new Date().toISOString() } };
-            saveToStorage(updated);
-            return updated;
-          });
-        }
-      } catch {}
-    }
-    setLoadingId(null);
-    setGlobalLoading(false);
-    setLastUpdated(new Date().toISOString());
-  }, []);
-
-  // Filtros
-  const filtered = SCHEDULE.filter(m => {
-    if (activePhase !== "Todos" && m.phase !== activePhase) return false;
-    if (activeGroup !== "Todos" && m.group !== activeGroup) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      if (!m.home.toLowerCase().includes(q) && !m.away.toLowerCase().includes(q)) return false;
-    }
-    if (view === "hoje") {
-      const today = new Date().toISOString().split("T")[0];
-      if (m.date !== today) return false;
-    }
-    return true;
-  });
-
-  // Agrupar por data
-  const byDate = {};
-  filtered.forEach(m => {
-    if (!byDate[m.date]) byDate[m.date] = [];
-    byDate[m.date].push(m);
-  });
-
-  const formatDate = (dateStr) => {
-    const d = new Date(dateStr + "T12:00:00");
-    return d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }).replace(".", "").toUpperCase();
-  };
-
-  const getStatusColor = (r) => {
-    if (!r) return "#334155";
-    if (r.status === "live") return "#ef4444";
-    if (r.status === "finished") return "#10b981";
-    return "#334155";
-  };
-
-  const getStatusLabel = (r) => {
-    if (!r) return null;
-    if (r.status === "live") return "AO VIVO";
-    if (r.status === "finished") return "ENCERRADO";
-    return null;
-  };
-
-  const phaseColors = {
-    "Grupos": "#3b82f6",
-    "2ª Fase": "#8b5cf6",
-    "Oitavas": "#f59e0b",
-    "Quartas": "#ef4444",
-    "Semifinal": "#ec4899",
-    "3º Lugar": "#6b7280",
-    "Final": "#f59e0b"
-  };
+// ══════════════════════════════════════════════════════
+// COMPONENTE DE JOGO (bolão)
+// ══════════════════════════════════════════════════════
+function MatchBet({ match, myBet, result, onSaveBet, saving }) {
+  const [h, setH] = useState(myBet?.homeScore ?? "");
+  const [a, setA] = useState(myBet?.awayScore ?? "");
+  const locked = isLocked(match);
+  const mins = minsToLock(match);
+  const phaseColor = PHASE_COLORS[match.phase] || "#3b82f6";
+  const score = myBet && result?.homeScore !== null && result?.homeScore !== undefined
+    ? calcScore({homeScore: myBet.homeScore, awayScore: myBet.awayScore}, result) : null;
+  const changed = String(h) !== String(myBet?.homeScore ?? "") || String(a) !== String(myBet?.awayScore ?? "");
 
   return (
     <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(135deg, #0a0f1e 0%, #0d1b2a 50%, #071a0d 100%)",
-      fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif",
-      color: "#e2e8f0",
+      background: match.featured ? "linear-gradient(135deg,rgba(250,204,21,0.07),rgba(16,185,129,0.05))" : "rgba(255,255,255,0.03)",
+      border:`1px solid ${match.featured?"rgba(250,204,21,0.15)":"rgba(255,255,255,0.07)"}`,
+      borderLeft:`3px solid ${score?.points>0?"#10b981":locked?"#475569":phaseColor}`,
+      borderRadius:6, padding:"10px 12px", marginBottom:2,
     }}>
+      <div style={{display:"flex",alignItems:"center",gap:6}}>
+        {/* Hora + grupo */}
+        <div style={{minWidth:36,textAlign:"center",flexShrink:0}}>
+          <div style={{fontSize:"0.72rem",fontWeight:700,color:"#94a3b8"}}>{match.time}</div>
+          {match.group!=="-"&&<div style={{fontSize:"0.52rem",color:phaseColor,fontWeight:800}}>G{match.group}</div>}
+        </div>
+        {/* Home */}
+        <div style={{flex:1,display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end",minWidth:0}}>
+          <span style={{fontSize:"0.78rem",color:"#cbd5e1",textAlign:"right",lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{match.home}</span>
+          <span style={{fontSize:"1rem",flexShrink:0}}>{match.homeFlag}</span>
+        </div>
+        {/* Inputs palpite */}
+        <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+          {locked ? (
+            <div style={{minWidth:64,textAlign:"center"}}>
+              {myBet?.homeScore!==undefined && myBet?.homeScore!==null ? (
+                <span style={{fontSize:"1.4rem",fontWeight:900,color:score?.points>0?"#4ade80":"#fff"}}>
+                  {myBet.homeScore} <span style={{color:"#475569",fontSize:"0.9rem"}}>–</span> {myBet.awayScore}
+                </span>
+              ) : (
+                <span style={{fontSize:"0.7rem",color:"#475569"}}>sem palpite</span>
+              )}
+            </div>
+          ) : (
+            <div style={{display:"flex",alignItems:"center",gap:3}}>
+              <input type="number" min="0" max="30" value={h} onChange={e=>setH(e.target.value)}
+                style={{width:36,height:32,textAlign:"center",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:6,color:"#fff",fontSize:"1rem",fontWeight:700,fontFamily:"'Barlow Condensed',sans-serif",outline:"none"}}/>
+              <span style={{color:"#475569",fontWeight:700}}>–</span>
+              <input type="number" min="0" max="30" value={a} onChange={e=>setA(e.target.value)}
+                style={{width:36,height:32,textAlign:"center",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:6,color:"#fff",fontSize:"1rem",fontWeight:700,fontFamily:"'Barlow Condensed',sans-serif",outline:"none"}}/>
+            </div>
+          )}
+        </div>
+        {/* Away */}
+        <div style={{flex:1,display:"flex",alignItems:"center",gap:4,minWidth:0}}>
+          <span style={{fontSize:"1rem",flexShrink:0}}>{match.awayFlag}</span>
+          <span style={{fontSize:"0.78rem",color:"#cbd5e1",lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{match.away}</span>
+        </div>
+        {/* Ação / status */}
+        <div style={{flexShrink:0,minWidth:44,textAlign:"right"}}>
+          {locked ? (
+            score ? (
+              <span style={{fontSize:"0.85rem",fontWeight:900,color:score.points>=5?"#ffd700":score.points>=3?"#4ade80":score.points>=1?"#f59e0b":"#475569"}}>
+                {score.points>0?`+${score.points}`:"✗"}
+              </span>
+            ) : (
+              result?.homeScore!==undefined ? <span style={{fontSize:"0.65rem",color:"#475569"}}>aguard.</span>
+              : <span style={{fontSize:"0.65rem",color:"#475569"}}>🔒</span>
+            )
+          ) : (
+            changed && h!=="" && a!=="" ? (
+              <button onClick={()=>onSaveBet(match.id,parseInt(h),parseInt(a))} disabled={saving}
+                style={{background:"#1d4ed8",border:"none",borderRadius:6,padding:"4px 8px",color:"#fff",fontSize:"0.7rem",fontWeight:700,cursor:"pointer",letterSpacing:"0.04em"}}>
+                {saving?"...":"SALVAR"}
+              </button>
+            ) : (
+              mins <= 60 && mins > 0 ? <span style={{fontSize:"0.6rem",color:"#f59e0b"}}>🕐{mins}min</span>
+              : myBet?.homeScore!==undefined ? <span style={{fontSize:"0.65rem",color:"#10b981"}}>✓</span>
+              : null
+            )
+          )}
+        </div>
+      </div>
+      {/* resultado real */}
+      {result?.homeScore!==undefined && result?.homeScore!==null && (
+        <div style={{marginTop:4,paddingTop:4,borderTop:"1px solid rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <span style={{fontSize:"0.62rem",color:"#475569",letterSpacing:"0.06em"}}>RESULTADO OFICIAL</span>
+          <span style={{fontSize:"0.85rem",fontWeight:900,color:"#10b981"}}>{result.homeScore} – {result.awayScore}</span>
+          {score && <span style={{fontSize:"0.62rem",color:score.points>0?"#4ade80":"#64748b"}}>{score.label}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// ABA BOLÃO
+// ══════════════════════════════════════════════════════
+function BolaoTab({ user, bets, results, onSaveBet, savingId }) {
+  const [filter, setFilter] = useState("proximos"); // proximos | todos | encerrados
+  const now = Date.now();
+  const filtered = SCHEDULE.filter(m => {
+    const dt = getMatchDateTime(m).getTime();
+    if (filter === "proximos") return dt > now - 7200000 && dt < now + 86400000*3;
+    if (filter === "encerrados") return dt < now - 7200000;
+    return true;
+  });
+  const byDate = {};
+  filtered.forEach(m => { if(!byDate[m.date]) byDate[m.date]=[]; byDate[m.date].push(m); });
+  const myTotal = SCHEDULE.reduce((acc,m) => {
+    const r = results[m.id]; const b = bets[m.id];
+    if(!r||!b) return acc;
+    const s = calcScore(b,r); return acc + (s?.points||0);
+  },0);
+  const betCount = Object.keys(bets).length;
+
+  return (
+    <div>
+      {/* Mini stat do user */}
+      <div style={{display:"flex",gap:10,marginBottom:12}}>
+        <div style={{flex:1,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:8,padding:"8px 12px",textAlign:"center"}}>
+          <div style={{fontSize:"1.4rem",fontWeight:900,color:"#ffd700"}}>{myTotal}</div>
+          <div style={{fontSize:"0.6rem",color:"#64748b",letterSpacing:"0.08em"}}>PONTOS</div>
+        </div>
+        <div style={{flex:1,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:8,padding:"8px 12px",textAlign:"center"}}>
+          <div style={{fontSize:"1.4rem",fontWeight:900,color:"#93c5fd"}}>{betCount}</div>
+          <div style={{fontSize:"0.6rem",color:"#64748b",letterSpacing:"0.08em"}}>PALPITES</div>
+        </div>
+        <div style={{flex:1,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:8,padding:"8px 12px",textAlign:"center"}}>
+          <div style={{fontSize:"1.4rem",fontWeight:900,color:"#4ade80"}}>{SCHEDULE.length-betCount}</div>
+          <div style={{fontSize:"0.6rem",color:"#64748b",letterSpacing:"0.08em"}}>FALTAM</div>
+        </div>
+      </div>
+      {/* Filtros */}
+      <div style={{display:"flex",gap:6,marginBottom:12}}>
+        {[["proximos","⚡ PRÓXIMOS"],["todos","📋 TODOS"],["encerrados","✅ ENCERRADOS"]].map(([v,l])=>(
+          <button key={v} onClick={()=>setFilter(v)} style={{
+            flex:1,padding:"6px 4px",borderRadius:20,border:"none",fontSize:"0.62rem",fontWeight:700,
+            letterSpacing:"0.04em",cursor:"pointer",fontFamily:"'Barlow Condensed',sans-serif",
+            background:filter===v?"#1d4ed8":"rgba(255,255,255,0.05)",color:filter===v?"#fff":"#64748b"
+          }}>{l}</button>
+        ))}
+      </div>
+      {/* Jogos */}
+      {Object.keys(byDate).sort().map(date=>(
+        <div key={date} style={{marginBottom:16}}>
+          <div style={{background:"linear-gradient(90deg,rgba(30,58,95,0.6),transparent)",borderLeft:"3px solid #1d4ed8",padding:"5px 12px",borderRadius:"4px 4px 0 0",marginBottom:1}}>
+            <span style={{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.12em",color:"#93c5fd"}}>{formatDate(date)}</span>
+          </div>
+          {byDate[date].map(m=>(
+            <MatchBet key={m.id} match={m} myBet={bets[m.id]} result={results[m.id]}
+              onSaveBet={onSaveBet} saving={savingId===m.id}/>
+          ))}
+        </div>
+      ))}
+      {filtered.length===0&&<div style={{textAlign:"center",padding:40,color:"#475569"}}>Nenhum jogo neste filtro</div>}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// ABA RANKING
+// ══════════════════════════════════════════════════════
+function RankingTab({ allBets, results, currentUser }) {
+  const [detail, setDetail] = useState(null);
+  const players = useMemo(() => {
+    const map = {};
+    Object.entries(allBets).forEach(([user, bets]) => {
+      let pts = 0, exact = 0, winner = 0, count = 0;
+      SCHEDULE.forEach(m => {
+        const r = results[m.id]; const b = bets[m.id];
+        if (!r || !b) return;
+        const s = calcScore(b, r); if (!s) return;
+        pts += s.points; count++;
+        if (s.points === 5) exact++;
+        else if (s.points >= 2) winner++;
+      });
+      map[user] = { user, pts, exact, winner, bets, count };
+    });
+    return Object.values(map).sort((a,b) => b.pts - a.pts || b.exact - a.exact);
+  }, [allBets, results]);
+
+  const medals = ["🥇","🥈","🥉"];
+  return (
+    <div>
+      {detail ? (
+        <div>
+          <button onClick={()=>setDetail(null)} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:6,padding:"6px 14px",color:"#94a3b8",fontSize:"0.8rem",cursor:"pointer",marginBottom:14,fontFamily:"'Barlow Condensed',sans-serif"}}>
+            ← VOLTAR
+          </button>
+          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:8,padding:"12px 16px",marginBottom:12}}>
+            <div style={{fontSize:"1.2rem",fontWeight:900,color:"#ffd700"}}>{detail.user}</div>
+            <div style={{display:"flex",gap:12,marginTop:6}}>
+              <span style={{fontSize:"0.72rem",color:"#94a3b8"}}>{detail.pts} pts</span>
+              <span style={{fontSize:"0.72rem",color:"#4ade80"}}>{detail.exact} placares exatos</span>
+              <span style={{fontSize:"0.72rem",color:"#f59e0b"}}>{detail.winner} acertou vencedor</span>
+            </div>
+          </div>
+          {SCHEDULE.filter(m=>detail.bets[m.id]).map(m => {
+            const b = detail.bets[m.id]; const r = results[m.id];
+            const s = r?.homeScore!==undefined ? calcScore(b,r) : null;
+            return (
+              <div key={m.id} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:6,padding:"8px 12px",marginBottom:2,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <span style={{fontSize:"0.78rem",color:"#94a3b8",flex:1}}>{m.homeFlag} {m.home} × {m.away} {m.awayFlag}</span>
+                <span style={{fontSize:"0.85rem",fontWeight:700,color:"#fff",margin:"0 10px"}}>{b.homeScore} – {b.awayScore}</span>
+                {s ? <span style={{fontSize:"0.7rem",fontWeight:700,color:s.points>=5?"#ffd700":s.points>=3?"#4ade80":s.points>=1?"#f59e0b":"#475569",minWidth:28,textAlign:"right"}}>{s.points>0?`+${s.points}`:"✗"}</span> : <span style={{minWidth:28}}></span>}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <>
+          <div style={{marginBottom:12,padding:"8px 12px",background:"rgba(255,215,0,0.05)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:8,fontSize:"0.72rem",color:"#94a3b8",lineHeight:1.8}}>
+            <strong style={{color:"#ffd700"}}>Pontuação:</strong> Placar exato = 5pts · Vencedor+1placar = 3pts · Só vencedor = 2pts · 1 placar certo = 1pt · Empate exato = 5pts · Só empate = 3pts
+          </div>
+          {players.length === 0 ? (
+            <div style={{textAlign:"center",padding:40,color:"#475569"}}>Nenhum participante ainda</div>
+          ) : players.map((p, i) => (
+            <div key={p.user} onClick={()=>setDetail(p)}
+              style={{background:p.user===currentUser?"rgba(29,78,216,0.12)":"rgba(255,255,255,0.03)",border:`1px solid ${p.user===currentUser?"rgba(29,78,216,0.3)":"rgba(255,255,255,0.07)"}`,borderRadius:8,padding:"10px 14px",marginBottom:6,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+              <div style={{fontSize:"1.3rem",minWidth:28,textAlign:"center"}}>{medals[i] || `${i+1}º`}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:"0.95rem",fontWeight:700,color:p.user===currentUser?"#93c5fd":"#fff"}}>{p.user}{p.user===currentUser?" (você)":""}</div>
+                <div style={{fontSize:"0.65rem",color:"#64748b",marginTop:2}}>{p.count} palpites · {p.exact} exatos · {p.winner} vencedores</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:"1.5rem",fontWeight:900,color:i===0?"#ffd700":i===1?"#94a3b8":i===2?"#cd7f32":"#e2e8f0"}}>{p.pts}</div>
+                <div style={{fontSize:"0.55rem",color:"#64748b",letterSpacing:"0.08em"}}>PONTOS</div>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// ABA TABELA (monitor original)
+// ══════════════════════════════════════════════════════
+function TabelaTab({ results, onFetch, fetchingId, globalFetching }) {
+  const [phase, setPhase] = useState("Todos");
+  const [group, setGroup] = useState("Todos");
+  const [search, setSearch] = useState("");
+  const PHASES = ["Todos","Grupos","2ª Fase","Oitavas","Quartas","Semifinal","3º Lugar","Final"];
+  const GROUPS = ["Todos","A","B","C","D","E","F","G","H","I","J","K","L"];
+  const filtered = SCHEDULE.filter(m => {
+    if (phase !== "Todos" && m.phase !== phase) return false;
+    if (group !== "Todos" && m.group !== group) return false;
+    if (search) { const q=search.toLowerCase(); if(!m.home.toLowerCase().includes(q)&&!m.away.toLowerCase().includes(q)) return false; }
+    return true;
+  });
+  const byDate = {};
+  filtered.forEach(m => { if(!byDate[m.date]) byDate[m.date]=[]; byDate[m.date].push(m); });
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}>
+        <button onClick={onFetch} disabled={globalFetching}
+          style={{background:globalFetching?"#1e3a5f":"linear-gradient(135deg,#1d4ed8,#059669)",border:"none",borderRadius:6,padding:"6px 14px",color:"#fff",fontSize:"0.75rem",fontWeight:700,letterSpacing:"0.06em",cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontFamily:"'Barlow Condensed',sans-serif"}}>
+          <span style={{display:"inline-block",animation:globalFetching?"spin 1s linear infinite":"none"}}>↻</span>
+          {globalFetching?"BUSCANDO...":"ATUALIZAR"}
+        </button>
+      </div>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar seleção..."
+        style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"7px 12px",color:"#fff",fontSize:"0.85rem",marginBottom:8,outline:"none",fontFamily:"'Barlow Condensed',sans-serif"}}/>
+      <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:6}}>
+        {PHASES.map(p=>(
+          <button key={p} onClick={()=>{setPhase(p);setGroup("Todos");}} style={{padding:"3px 9px",borderRadius:20,border:"none",fontSize:"0.65rem",fontWeight:700,cursor:"pointer",fontFamily:"'Barlow Condensed',sans-serif",background:phase===p?(PHASE_COLORS[p]||"#1d4ed8"):"rgba(255,255,255,0.04)",color:phase===p?"#fff":"#94a3b8"}}>{p}</button>
+        ))}
+      </div>
+      {(phase==="Todos"||phase==="Grupos")&&(
+        <div style={{display:"flex",flexWrap:"wrap",gap:3,marginBottom:8}}>
+          {GROUPS.map(g=>(
+            <button key={g} onClick={()=>setGroup(g)} style={{padding:"2px 8px",borderRadius:20,border:"none",fontSize:"0.62rem",fontWeight:700,cursor:"pointer",fontFamily:"'Barlow Condensed',sans-serif",background:group===g?"#f59e0b":"rgba(255,255,255,0.04)",color:group===g?"#000":"#94a3b8"}}>G{g==="Todos"?"✦":g}</button>
+          ))}
+        </div>
+      )}
+      {Object.keys(byDate).sort().map(date=>(
+        <div key={date} style={{marginBottom:16}}>
+          <div style={{background:"linear-gradient(90deg,rgba(30,58,95,0.6),transparent)",borderLeft:"3px solid #1d4ed8",padding:"5px 12px",borderRadius:"4px 4px 0 0",marginBottom:1}}>
+            <span style={{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.12em",color:"#93c5fd"}}>{formatDate(date)}</span>
+          </div>
+          {byDate[date].map((m,i)=>{
+            const r = results[m.id]; const loading = fetchingId===m.id; const ph = PHASE_COLORS[m.phase]||"#3b82f6";
+            return (
+              <div key={m.id} style={{
+                background:m.featured?"linear-gradient(135deg,rgba(250,204,21,0.07),rgba(16,185,129,0.05))":"rgba(255,255,255,0.03)",
+                border:`1px solid ${m.featured?"rgba(250,204,21,0.15)":"rgba(255,255,255,0.06)"}`,
+                borderLeft:`3px solid ${r?.status==="finished"?"#10b981":r?.status==="live"?"#ef4444":ph}`,
+                borderRadius:i===byDate[date].length-1?"0 0 6px 6px":0,marginBottom:1,padding:"9px 12px"
+              }}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{minWidth:36,textAlign:"center"}}>
+                    <div style={{fontSize:"0.7rem",fontWeight:700,color:"#94a3b8"}}>{m.time}</div>
+                    {m.group!=="-"&&<div style={{fontSize:"0.5rem",color:ph,fontWeight:800}}>G{m.group}</div>}
+                  </div>
+                  <div style={{flex:1,display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end",minWidth:0}}>
+                    <span style={{fontSize:"0.78rem",color:"#cbd5e1",textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.home}</span>
+                    <span style={{flexShrink:0}}>{m.homeFlag}</span>
+                  </div>
+                  <div style={{minWidth:56,textAlign:"center"}}>
+                    {r?.status==="finished"||r?.status==="live" ? (
+                      <span style={{fontSize:"1.3rem",fontWeight:900,color:r.status==="live"?"#ef4444":"#fff"}}>{r.homeScore}–{r.awayScore}</span>
+                    ) : <span style={{fontSize:"0.75rem",color:"#334155",fontWeight:700}}>vs</span>}
+                    {r?.status==="live"&&<div style={{fontSize:"0.5rem",color:"#ef4444",fontWeight:800}}>AO VIVO</div>}
+                  </div>
+                  <div style={{flex:1,display:"flex",alignItems:"center",gap:4,minWidth:0}}>
+                    <span style={{flexShrink:0}}>{m.awayFlag}</span>
+                    <span style={{fontSize:"0.78rem",color:"#cbd5e1",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.away}</span>
+                  </div>
+                  <button onClick={()=>onFetch(m)} disabled={loading||globalFetching} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:6,padding:"4px 7px",fontSize:"0.8rem",color:"#94a3b8",cursor:"pointer",flexShrink:0}}>
+                    {loading?"⌛":"↻"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// PAINEL ADMIN
+// ══════════════════════════════════════════════════════
+function AdminPanel({ results, allBets, onSetResult, onClose }) {
+  const [sel, setSel] = useState(null);
+  const [h, setH] = useState(""); const [a, setA] = useState(""); const [saving, setSaving] = useState(false);
+  const [filterPhase, setFilterPhase] = useState("Grupos");
+  const upcoming = SCHEDULE.filter(m => m.phase === filterPhase);
+
+  const handleSave = async () => {
+    if (!sel || h==="" || a==="") return;
+    setSaving(true);
+    await onSetResult(sel.id, parseInt(h), parseInt(a));
+    setSaving(false); setH(""); setA(""); setSel(null);
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:200,overflowY:"auto",padding:16}}>
+      <div style={{maxWidth:600,margin:"0 auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <h2 style={{color:"#ffd700",fontSize:"1.3rem",fontWeight:900,letterSpacing:"0.06em"}}>👑 PAINEL ADMIN</h2>
+          <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:6,padding:"6px 12px",color:"#94a3b8",cursor:"pointer"}}>FECHAR ×</button>
+        </div>
+        {/* Definir resultado */}
+        <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:16,marginBottom:16}}>
+          <p style={{color:"#93c5fd",fontSize:"0.8rem",fontWeight:700,letterSpacing:"0.06em",marginBottom:10}}>DEFINIR RESULTADO OFICIAL</p>
+          <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
+            {["Grupos","2ª Fase","Oitavas","Quartas","Semifinal","Final"].map(p=>(
+              <button key={p} onClick={()=>{setFilterPhase(p);setSel(null);}} style={{padding:"3px 10px",borderRadius:20,border:"none",fontSize:"0.65rem",fontWeight:700,cursor:"pointer",background:filterPhase===p?"#1d4ed8":"rgba(255,255,255,0.06)",color:filterPhase===p?"#fff":"#64748b"}}>
+                {p}
+              </button>
+            ))}
+          </div>
+          <select value={sel?.id||""} onChange={e=>{ const m=SCHEDULE.find(x=>x.id===parseInt(e.target.value)); setSel(m); const r=results[m?.id]; setH(r?.homeScore??""); setA(r?.awayScore??""); }}
+            style={{width:"100%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,padding:"8px 10px",color:"#fff",fontSize:"0.85rem",marginBottom:10,outline:"none"}}>
+            <option value="">Selecione um jogo...</option>
+            {upcoming.map(m=>(
+              <option key={m.id} value={m.id}>{m.time} · {m.home} × {m.away} {results[m.id]?.homeScore!==undefined?`(${results[m.id].homeScore}-${results[m.id].awayScore})`:""}</option>
+            ))}
+          </select>
+          {sel && (
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{color:"#fff",flex:1,fontSize:"0.85rem"}}>{sel.homeFlag} {sel.home}</span>
+              <input type="number" min="0" max="30" value={h} onChange={e=>setH(e.target.value)} style={{width:44,height:36,textAlign:"center",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:6,color:"#fff",fontSize:"1.1rem",fontWeight:700,outline:"none"}}/>
+              <span style={{color:"#475569",fontWeight:700}}>–</span>
+              <input type="number" min="0" max="30" value={a} onChange={e=>setA(e.target.value)} style={{width:44,height:36,textAlign:"center",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:6,color:"#fff",fontSize:"1.1rem",fontWeight:700,outline:"none"}}/>
+              <span style={{color:"#fff",flex:1,fontSize:"0.85rem",textAlign:"right"}}>{sel.away} {sel.awayFlag}</span>
+              <button onClick={handleSave} disabled={saving} style={{background:"#059669",border:"none",borderRadius:6,padding:"8px 14px",color:"#fff",fontSize:"0.8rem",fontWeight:700,cursor:"pointer"}}>
+                {saving?"...":"SALVAR"}
+              </button>
+            </div>
+          )}
+        </div>
+        {/* Todos os palpites por jogo */}
+        <p style={{color:"#93c5fd",fontSize:"0.8rem",fontWeight:700,letterSpacing:"0.06em",marginBottom:8}}>PALPITES POR JOGO</p>
+        {SCHEDULE.filter(m=>m.phase===filterPhase).map(m => {
+          const gameBets = Object.entries(allBets).filter(([,bets])=>bets[m.id]);
+          if (!gameBets.length) return null;
+          return (
+            <div key={m.id} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:"10px 12px",marginBottom:8}}>
+              <div style={{fontSize:"0.8rem",fontWeight:700,color:"#fff",marginBottom:6}}>{m.homeFlag} {m.home} × {m.away} {m.awayFlag} <span style={{color:"#64748b",fontWeight:400,fontSize:"0.7rem"}}>{m.date} {m.time}</span></div>
+              {gameBets.map(([user,bets])=>{
+                const b=bets[m.id]; const r=results[m.id]; const s=r?.homeScore!==undefined?calcScore(b,r):null;
+                return (
+                  <div key={user} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+                    <span style={{fontSize:"0.78rem",color:"#94a3b8"}}>{user}</span>
+                    <span style={{fontSize:"0.85rem",fontWeight:700,color:"#fff"}}>{b.homeScore} – {b.awayScore}</span>
+                    {s&&<span style={{fontSize:"0.72rem",fontWeight:700,color:s.points>0?"#4ade80":"#475569"}}>{s.points>0?`+${s.points}pts`:"✗"}</span>}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// APP PRINCIPAL
+// ══════════════════════════════════════════════════════
+function App() {
+  const [user, setUser] = useState(() => localStorage.getItem("bolao_user_v1") || null);
+  const [tab, setTab] = useState("bolao");
+  const [bets, setBets] = useState({});
+  const [allBets, setAllBets] = useState({});
+  const [results, setResults] = useState({});
+  const [savingId, setSavingId] = useState(null);
+  const [fetchingId, setFetchingId] = useState(null);
+  const [globalFetching, setGlobalFetching] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [adminInput, setAdminInput] = useState("");
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminAuth, setAdminAuth] = useState(false);
+  const [ticker, setTicker] = useState(0);
+
+  // Tick a cada minuto para atualizar timers
+  useEffect(() => { const t = setInterval(()=>setTicker(x=>x+1),60000); return ()=>clearInterval(t); }, []);
+
+  // Login persistente
+  const handleLogin = (name) => { localStorage.setItem("bolao_user_v1",name); setUser(name); };
+  const handleLogout = () => { localStorage.removeItem("bolao_user_v1"); setUser(null); setBets({}); };
+
+  // Firebase listeners
+  useEffect(() => {
+    if (!db || !user) return;
+    // Meus palpites
+    const unsubBets = db.collection("bets").doc(user).onSnapshot(snap => {
+      setBets(snap.exists ? (snap.data()||{}) : {});
+    });
+    // Resultados
+    const unsubResults = db.collection("results").doc("official").onSnapshot(snap => {
+      setResults(snap.exists ? (snap.data()||{}) : {});
+    });
+    // Todos os palpites (para ranking)
+    const unsubAll = db.collection("bets").onSnapshot(snap => {
+      const map = {}; snap.forEach(d => { map[d.id] = d.data()||{}; }); setAllBets(map);
+    });
+    return () => { unsubBets(); unsubResults(); unsubAll(); };
+  }, [user, db]);
+
+  // Salvar palpite
+  const handleSaveBet = useCallback(async (matchId, h, a) => {
+    if (!db || !user) return;
+    setSavingId(matchId);
+    try {
+      await db.collection("bets").doc(user).set({ [matchId]: { homeScore: h, awayScore: a, at: new Date().toISOString() } }, { merge: true });
+    } catch(e) { console.error(e); }
+    setSavingId(null);
+  }, [user]);
+
+  // Definir resultado (admin)
+  const handleSetResult = useCallback(async (matchId, h, a) => {
+    if (!db) return;
+    await db.collection("results").doc("official").set({ [matchId]: { homeScore: h, awayScore: a, status: "finished", updatedAt: new Date().toISOString() } }, { merge: true });
+  }, []);
+
+  // Buscar resultado via Claude API
+  const fetchResult = useCallback(async (match) => {
+    if (!match) return;
+    setFetchingId(match.id);
+    const prompt = `Copa do Mundo 2026: ${match.home} x ${match.away} em ${match.date} às ${match.time} BRT. Busque o resultado. Responda SOMENTE JSON: {"status":"pending"|"finished"|"live","homeScore":número|null,"awayScore":número|null}`;
+    try {
+      const resp = await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:300,tools:[{type:"web_search_20250305",name:"web_search"}],messages:[{role:"user",content:prompt}]})
+      });
+      const data = await resp.json();
+      const txt = data.content?.find(b=>b.type==="text")?.text;
+      if (txt) {
+        const parsed = JSON.parse(txt.replace(/```json|```/g,"").trim());
+        if (parsed.status==="finished"&&parsed.homeScore!==null) {
+          await handleSetResult(match.id, parsed.homeScore, parsed.awayScore);
+        }
+      }
+    } catch(e){console.error(e);}
+    setFetchingId(null);
+  }, [handleSetResult]);
+
+  const fetchAll = useCallback(async () => {
+    setGlobalFetching(true);
+    const now = Date.now();
+    const recent = SCHEDULE.filter(m => {
+      const dt = getMatchDateTime(m).getTime();
+      return dt < now + 3600000 && dt > now - 172800000;
+    });
+    for (const m of recent) { await fetchResult(m); }
+    setGlobalFetching(false);
+  }, [fetchResult]);
+
+  if (!user) return <LoginScreen onLogin={handleLogin}/>;
+
+  return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#0a0f1e,#0d1b2a,#071a0d)",fontFamily:"'Barlow Condensed',Arial Narrow,sans-serif",color:"#e2e8f0"}}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&family=Barlow:wght@400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #0a0f1e; } ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 2px; }
-        .match-card { transition: all 0.2s ease; cursor: pointer; }
-        .match-card:hover { transform: translateY(-1px); filter: brightness(1.05); }
-        .pill-btn { transition: all 0.15s; cursor: pointer; border: none; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.05em; }
-        .pill-btn:hover { transform: scale(1.05); }
-        .fetch-btn { transition: all 0.2s; cursor: pointer; border: none; font-family: 'Barlow Condensed', sans-serif; }
-        .fetch-btn:hover:not(:disabled) { transform: scale(1.1); }
-        .fetch-btn:disabled { opacity: 0.5; cursor: wait; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-        .live-dot { animation: pulse 1s infinite; }
-        .spin { animation: spin 1s linear infinite; }
-        .fade-in { animation: fadeIn 0.3s ease; }
-        .glow-green { box-shadow: 0 0 12px rgba(16,185,129,0.3); }
-        .glow-red { box-shadow: 0 0 12px rgba(239,68,68,0.5); }
-        .score-display { font-size: 1.8rem; font-weight: 900; letter-spacing: 0.02em; }
-        .section-header { background: linear-gradient(90deg, rgba(30,58,95,0.6) 0%, transparent 100%); border-left: 3px solid #1d4ed8; }
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#0a0f1e}::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:2px}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        select option{background:#0d1b2a;color:#fff;}
       `}</style>
 
       {/* HEADER */}
-      <header style={{
-        background: "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(10,15,30,0.95) 100%)",
-        borderBottom: "1px solid rgba(255,215,0,0.2)",
-        padding: "16px 20px",
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-        backdropFilter: "blur(10px)",
-      }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <span style={{ fontSize: "2rem", lineHeight: 1 }}>⚽</span>
-                <h1 style={{
-                  fontSize: "clamp(1.4rem, 4vw, 2rem)",
-                  fontWeight: 900,
-                  letterSpacing: "0.04em",
-                  lineHeight: 1,
-                  background: "linear-gradient(90deg, #ffd700, #ffffff, #4ade80)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}>COPA DO MUNDO 2026</h1>
+      <header style={{background:"linear-gradient(180deg,rgba(0,0,0,0.92),rgba(10,15,30,0.96))",borderBottom:"1px solid rgba(255,215,0,0.15)",padding:"10px 16px",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(10px)"}}>
+        <div style={{maxWidth:700,margin:"0 auto"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:"1.5rem"}}>⚽</span>
+              <div>
+                <div style={{fontSize:"1.1rem",fontWeight:900,letterSpacing:"0.04em",background:"linear-gradient(90deg,#ffd700,#fff,#4ade80)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",lineHeight:1}}>BOLÃO COPA 2026</div>
+                <div style={{fontSize:"0.6rem",color:"#64748b",letterSpacing:"0.06em"}}>Olá, {user}!</div>
               </div>
-              {lastUpdated && (
-                <p style={{ fontSize: "0.65rem", color: "#64748b", marginTop: 2, letterSpacing: "0.08em" }}>
-                  ↻ {new Date(lastUpdated).toLocaleString("pt-BR", { day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit" })}
-                </p>
-              )}
             </div>
-            <button
-              className="fetch-btn"
-              onClick={fetchAllRecent}
-              disabled={globalLoading}
-              style={{
-                background: globalLoading ? "#1e3a5f" : "linear-gradient(135deg, #1d4ed8, #059669)",
-                color: "#fff",
-                padding: "8px 16px",
-                borderRadius: 6,
-                fontSize: "0.8rem",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              {globalLoading ? (
-                <><span className="spin" style={{ display:"inline-block", fontSize:"0.9rem" }}>↻</span> ATUALIZANDO...</>
-              ) : (
-                <><span>↻</span> ATUALIZAR JOGOS</>
-              )}
-            </button>
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <button onClick={()=>setShowAdminLogin(true)} style={{background:"rgba(255,215,0,0.08)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:6,padding:"5px 8px",color:"#ffd700",fontSize:"0.7rem",cursor:"pointer"}}>👑</button>
+              <button onClick={handleLogout} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:6,padding:"5px 8px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>Sair</button>
+            </div>
           </div>
-
-          {/* ABAS VISTA */}
-          <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
-            {[["tabela", "📋 TABELA COMPLETA"], ["hoje", "📅 HOJE"]].map(([v, label]) => (
-              <button key={v} className="pill-btn" onClick={() => setView(v)} style={{
-                padding: "5px 14px", borderRadius: 20, fontSize: "0.72rem",
-                background: view === v ? "#1d4ed8" : "rgba(255,255,255,0.05)",
-                color: view === v ? "#fff" : "#94a3b8",
-                border: view === v ? "none" : "1px solid rgba(255,255,255,0.1)",
-              }}>{label}</button>
+          {/* Tabs */}
+          <div style={{display:"flex",gap:4,marginTop:8}}>
+            {[["bolao","🎯 MEU BOLÃO"],["ranking","🏆 RANKING"],["tabela","📋 TABELA"]].map(([v,l])=>(
+              <button key={v} onClick={()=>setTab(v)} style={{flex:1,padding:"6px 4px",borderRadius:8,border:"none",fontSize:"0.72rem",fontWeight:700,letterSpacing:"0.04em",cursor:"pointer",fontFamily:"'Barlow Condensed',sans-serif",
+                background:tab===v?"#1d4ed8":"rgba(255,255,255,0.05)",color:tab===v?"#fff":"#64748b",
+                borderBottom:tab===v?"2px solid #ffd700":"2px solid transparent"}}>{l}</button>
             ))}
           </div>
         </div>
       </header>
 
-      <main style={{ maxWidth: 900, margin: "0 auto", padding: "16px 12px" }}>
-
-        {/* FILTROS */}
-        <div style={{ marginBottom: 16 }}>
-          {/* Search */}
-          <input
-            placeholder="🔍 Buscar seleção..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            style={{
-              width: "100%",
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 8,
-              padding: "8px 14px",
-              color: "#e2e8f0",
-              fontSize: "0.85rem",
-              fontFamily: "Barlow, sans-serif",
-              marginBottom: 10,
-              outline: "none",
-            }}
-          />
-
-          {/* Fases */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
-            {PHASES.map(p => (
-              <button key={p} className="pill-btn" onClick={() => { setActivePhase(p); setActiveGroup("Todos"); }} style={{
-                padding: "4px 10px", borderRadius: 20, fontSize: "0.68rem",
-                background: activePhase === p ? (phaseColors[p] || "#1d4ed8") : "rgba(255,255,255,0.04)",
-                color: activePhase === p ? "#fff" : "#94a3b8",
-                border: activePhase === p ? "none" : "1px solid rgba(255,255,255,0.08)",
-              }}>{p}</button>
-            ))}
-          </div>
-
-          {/* Grupos (só quando fase = Grupos ou Todos) */}
-          {(activePhase === "Todos" || activePhase === "Grupos") && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-              {GROUPS.map(g => (
-                <button key={g} className="pill-btn" onClick={() => setActiveGroup(g)} style={{
-                  padding: "3px 9px", borderRadius: 20, fontSize: "0.65rem",
-                  background: activeGroup === g ? "#f59e0b" : "rgba(255,255,255,0.04)",
-                  color: activeGroup === g ? "#000" : "#94a3b8",
-                  border: activeGroup === g ? "none" : "1px solid rgba(255,255,255,0.08)",
-                  fontWeight: 700,
-                }}>Grupo {g === "Todos" ? "✦" : g}</button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* JOGOS */}
-        {Object.keys(byDate).length === 0 ? (
-          <div style={{ textAlign: "center", padding: 60, color: "#475569" }}>
-            <div style={{ fontSize: "3rem", marginBottom: 12 }}>🔍</div>
-            <div style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "0.1em" }}>NENHUM JOGO ENCONTRADO</div>
-          </div>
-        ) : (
-          Object.keys(byDate).sort().map(date => (
-            <div key={date} style={{ marginBottom: 20 }} className="fade-in">
-              {/* Header da data */}
-              <div className="section-header" style={{
-                padding: "6px 14px",
-                borderRadius: "4px 4px 0 0",
-                marginBottom: 1,
-              }}>
-                <span style={{ fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.12em", color: "#93c5fd" }}>
-                  {formatDate(date)}
-                </span>
-              </div>
-
-              {byDate[date].map((match, i) => {
-                const r = results[match.id];
-                const isLoading = loadingId === match.id;
-                const isExpanded = expandedId === match.id;
-                const statusColor = getStatusColor(r);
-                const statusLabel = getStatusLabel(r);
-                const phaseColor = phaseColors[match.phase] || "#3b82f6";
-
-                return (
-                  <div
-                    key={match.id}
-                    className={`match-card ${r?.status === "live" ? "glow-red" : r?.status === "finished" ? "" : ""}`}
-                    onClick={() => setExpandedId(isExpanded ? null : match.id)}
-                    style={{
-                      background: match.featured
-                        ? "linear-gradient(135deg, rgba(250,204,21,0.08) 0%, rgba(16,185,129,0.06) 100%)"
-                        : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${match.featured ? "rgba(250,204,21,0.15)" : "rgba(255,255,255,0.06)"}`,
-                      borderLeft: `3px solid ${r?.status === "finished" ? "#10b981" : r?.status === "live" ? "#ef4444" : phaseColor}`,
-                      borderRadius: i === byDate[date].length - 1 ? "0 0 6px 6px" : 0,
-                      marginBottom: 1,
-                      padding: "10px 14px",
-                      userSelect: "none",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      {/* Hora */}
-                      <div style={{ minWidth: 38, textAlign: "center" }}>
-                        <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.05em" }}>{match.time}</div>
-                        {match.group !== "-" && (
-                          <div style={{ fontSize: "0.55rem", color: phaseColor, fontWeight: 800, letterSpacing: "0.1em", marginTop: 1 }}>
-                            GRP {match.group}
-                          </div>
-                        )}
-                        {match.matchNum && (
-                          <div style={{ fontSize: "0.55rem", color: "#64748b", letterSpacing: "0.05em" }}>J{match.matchNum}</div>
-                        )}
-                      </div>
-
-                      {/* Times */}
-                      <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-                        {/* Home */}
-                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 5, justifyContent: "flex-end", minWidth: 0 }}>
-                          <span style={{ fontSize: "0.82rem", fontWeight: r?.status === "finished" && r.homeScore > r.awayScore ? 800 : 500, color: r?.status === "finished" && r.homeScore > r.awayScore ? "#fff" : "#cbd5e1", textAlign: "right", letterSpacing: "0.02em", lineHeight: 1.2 }}>
-                            {match.home}
-                          </span>
-                          <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>{match.homeFlag}</span>
-                        </div>
-
-                        {/* Placar / VS */}
-                        <div style={{ minWidth: 60, textAlign: "center" }}>
-                          {r?.status === "finished" || r?.status === "live" ? (
-                            <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
-                              {r?.status === "live" && <span className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", display: "inline-block" }} />}
-                              <span className="score-display" style={{ color: r?.status === "live" ? "#ef4444" : "#fff" }}>
-                                {r.homeScore ?? "?"} <span style={{ color: "#475569", fontSize: "1rem" }}>–</span> {r.awayScore ?? "?"}
-                              </span>
-                            </div>
-                          ) : (
-                            <span style={{ fontSize: "0.8rem", color: "#334155", fontWeight: 700, letterSpacing: "0.05em" }}>vs</span>
-                          )}
-                          {statusLabel && (
-                            <div style={{ fontSize: "0.5rem", fontWeight: 800, letterSpacing: "0.12em", color: r?.status === "live" ? "#ef4444" : "#10b981", marginTop: 2 }}>
-                              {statusLabel}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Away */}
-                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-                          <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>{match.awayFlag}</span>
-                          <span style={{ fontSize: "0.82rem", fontWeight: r?.status === "finished" && r.awayScore > r.homeScore ? 800 : 500, color: r?.status === "finished" && r.awayScore > r.homeScore ? "#fff" : "#cbd5e1", letterSpacing: "0.02em", lineHeight: 1.2 }}>
-                            {match.away}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Botão buscar */}
-                      <button
-                        className="fetch-btn"
-                        onClick={e => { e.stopPropagation(); fetchResult(match); }}
-                        disabled={isLoading || globalLoading}
-                        title="Buscar resultado"
-                        style={{
-                          background: "rgba(255,255,255,0.06)",
-                          border: "1px solid rgba(255,255,255,0.1)",
-                          borderRadius: 6,
-                          padding: "5px 8px",
-                          fontSize: "0.85rem",
-                          color: "#94a3b8",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {isLoading ? <span className="spin" style={{ display: "inline-block" }}>↻</span> : "↻"}
-                      </button>
-                    </div>
-
-                    {/* Detalhes expandidos */}
-                    {isExpanded && r && (
-                      <div className="fade-in" style={{
-                        marginTop: 8,
-                        paddingTop: 8,
-                        borderTop: "1px solid rgba(255,255,255,0.06)",
-                        fontSize: "0.75rem",
-                        color: "#64748b",
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: 8,
-                      }}>
-                        {r.extra && <span style={{ color: "#94a3b8" }}>📋 {r.extra}</span>}
-                        {r.source && <span>Fonte: {r.source}</span>}
-                        {r.fetchedAt && <span>Consultado: {new Date(r.fetchedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))
-        )}
-
-        {/* LEGENDA */}
-        <div style={{
-          marginTop: 24,
-          padding: "12px 16px",
-          background: "rgba(255,255,255,0.02)",
-          borderRadius: 8,
-          border: "1px solid rgba(255,255,255,0.05)",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 16,
-          fontSize: "0.65rem",
-          color: "#475569",
-          letterSpacing: "0.06em",
-        }}>
-          <span>🟢 Encerrado</span>
-          <span>🔴 Ao Vivo</span>
-          <span>⭐ Jogo destaque (Brasil, Argentina)</span>
-          <span>↻ Buscar resultado individual</span>
-          <span>Clique no jogo para ver detalhes</span>
-        </div>
+      <main style={{maxWidth:700,margin:"0 auto",padding:"14px 12px",paddingBottom:32}}>
+        {tab==="bolao"&&<BolaoTab user={user} bets={bets} results={results} onSaveBet={handleSaveBet} savingId={savingId}/>}
+        {tab==="ranking"&&<RankingTab allBets={allBets} results={results} currentUser={user}/>}
+        {tab==="tabela"&&<TabelaTab results={results} onFetch={(m)=>m?fetchResult(m):fetchAll()} fetchingId={fetchingId} globalFetching={globalFetching}/>}
       </main>
+
+      {/* Admin login modal */}
+      {showAdminLogin&&!adminAuth&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:150,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+          <div style={{background:"#0d1b2a",border:"1px solid rgba(255,215,0,0.2)",borderRadius:12,padding:28,width:"100%",maxWidth:320}}>
+            <h3 style={{color:"#ffd700",marginBottom:16,fontSize:"1rem",fontWeight:700}}>👑 Acesso Admin</h3>
+            <input type="password" value={adminInput} onChange={e=>setAdminInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(adminInput===ADMIN_PASSWORD?(setAdminAuth(true),setShowAdmin(true),setShowAdminLogin(false)):alert("Senha incorreta"))}
+              placeholder="Senha admin..." style={{width:"100%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,padding:"10px 12px",color:"#fff",fontSize:"1rem",outline:"none",marginBottom:10}}/>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setShowAdminLogin(false)} style={{flex:1,background:"rgba(255,255,255,0.06)",border:"none",borderRadius:8,padding:10,color:"#94a3b8",cursor:"pointer"}}>Cancelar</button>
+              <button onClick={()=>{ if(adminInput===ADMIN_PASSWORD){setAdminAuth(true);setShowAdmin(true);setShowAdminLogin(false);}else alert("Senha incorreta");}} style={{flex:1,background:"#1d4ed8",border:"none",borderRadius:8,padding:10,color:"#fff",fontWeight:700,cursor:"pointer"}}>Entrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin panel */}
+      {showAdmin&&adminAuth&&<AdminPanel results={results} allBets={allBets} onSetResult={handleSetResult} onClose={()=>setShowAdmin(false)}/>}
     </div>
   );
 }
 
-    // localStorage as storage shim (no window.storage in standalone)
-    window.storage = {
-      get: async (key) => {
-        try {
-          const val = localStorage.getItem(key);
-          return val ? { key, value: val } : null;
-        } catch { return null; }
-      },
-      set: async (key, value) => {
-        try {
-          localStorage.setItem(key, value);
-          return { key, value };
-        } catch { return null; }
-      },
-      delete: async (key) => {
-        try { localStorage.removeItem(key); return { key, deleted: true }; } catch { return null; }
-      }
-    };
-
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(Copa2026));
-  </script>
-
-  <!-- PWA Service Worker -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    }
-  </script>
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
 </body>
 </html>

@@ -1,0 +1,13 @@
+{
+  "name": "Copa do Mundo 2026",
+  "short_name": "Copa 2026",
+  "description": "Monitor de jogos da Copa do Mundo 2026",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0a0f1e",
+  "theme_color": "#0a0f1e",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

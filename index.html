@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Copa 2026" />
+  <meta name="theme-color" content="#0a0f1e" />
+  <title>⚽ Copa do Mundo 2026</title>
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- PWA icons -->
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+
+  <!-- React + Babel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+  <style>
+    html, body, #root { margin: 0; padding: 0; height: 100%; background: #0a0f1e; }
+    body { overscroll-behavior: none; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="react">
+// destructure hooks
+const { useState, useEffect, useCallback } = React;
+
+
+// ─── DADOS DA TABELA ────────────────────────────────────────────────────────
+const SCHEDULE = [
+  // Fase de Grupos
+  { id: 1, date: "2026-06-11", time: "16:00", home: "México", homeFlag: "🇲🇽", away: "África do Sul", awayFlag: "🇿🇦", group: "A", phase: "Grupos" },
+  { id: 2, date: "2026-06-11", time: "23:00", home: "Coreia do Sul", homeFlag: "🇰🇷", away: "Tchéquia/Dinamarca", awayFlag: "🇨🇿🇩🇰", group: "A", phase: "Grupos" },
+  { id: 3, date: "2026-06-12", time: "16:00", home: "Canadá", homeFlag: "🇨🇦", away: "Bósnia/Itália", awayFlag: "🇧🇦🇮🇹", group: "B", phase: "Grupos" },
+  { id: 4, date: "2026-06-12", time: "22:00", home: "Estados Unidos", homeFlag: "🇺🇸", away: "Paraguai", awayFlag: "🇵🇾", group: "D", phase: "Grupos" },
+  { id: 5, date: "2026-06-13", time: "16:00", home: "Qatar", homeFlag: "🇶🇦", away: "Suíça", awayFlag: "🇨🇭", group: "B", phase: "Grupos" },
+  { id: 6, date: "2026-06-13", time: "19:00", home: "Brasil", homeFlag: "🇧🇷", away: "Marrocos", awayFlag: "🇲🇦", group: "C", phase: "Grupos", featured: true },
+  { id: 7, date: "2026-06-13", time: "22:00", home: "Haiti", homeFlag: "🇭🇹", away: "Escócia", awayFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", group: "C", phase: "Grupos" },
+  { id: 8, date: "2026-06-14", time: "01:00", home: "Austrália", homeFlag: "🇦🇺", away: "Kosovo/Turquia", awayFlag: "🇽🇰🇹🇷", group: "D", phase: "Grupos" },
+  { id: 9, date: "2026-06-14", time: "14:00", home: "Alemanha", homeFlag: "🇩🇪", away: "Curaçao", awayFlag: "🇨🇼", group: "E", phase: "Grupos" },
+  { id: 10, date: "2026-06-14", time: "17:00", home: "Holanda", homeFlag: "🇳🇱", away: "Japão", awayFlag: "🇯🇵", group: "F", phase: "Grupos" },
+  { id: 11, date: "2026-06-14", time: "20:00", home: "Costa do Marfim", homeFlag: "🇨🇮", away: "Equador", awayFlag: "🇪🇨", group: "E", phase: "Grupos" },
+  { id: 12, date: "2026-06-14", time: "23:00", home: "Polônia/Suécia", homeFlag: "🇵🇱🇸🇪", away: "Tunísia", awayFlag: "🇹🇳", group: "F", phase: "Grupos" },
+  { id: 13, date: "2026-06-15", time: "13:00", home: "Espanha", homeFlag: "🇪🇸", away: "Cabo Verde", awayFlag: "🇨🇻", group: "H", phase: "Grupos" },
+  { id: 14, date: "2026-06-15", time: "16:00", home: "Bélgica", homeFlag: "🇧🇪", away: "Egito", awayFlag: "🇪🇬", group: "G", phase: "Grupos" },
+  { id: 15, date: "2026-06-15", time: "19:00", home: "Arábia Saudita", homeFlag: "🇸🇦", away: "Uruguai", awayFlag: "🇺🇾", group: "H", phase: "Grupos" },
+  { id: 16, date: "2026-06-15", time: "22:00", home: "Irã", homeFlag: "🇮🇷", away: "Nova Zelândia", awayFlag: "🇳🇿", group: "G", phase: "Grupos" },
+  { id: 17, date: "2026-06-16", time: "16:00", home: "França", homeFlag: "🇫🇷", away: "Senegal", awayFlag: "🇸🇳", group: "I", phase: "Grupos" },
+  { id: 18, date: "2026-06-16", time: "19:00", home: "Bolívia/Iraque", homeFlag: "🇧🇴🇮🇶", away: "Noruega", awayFlag: "🇳🇴", group: "I", phase: "Grupos" },
+  { id: 19, date: "2026-06-16", time: "22:00", home: "Argentina", homeFlag: "🇦🇷", away: "Argélia", awayFlag: "🇩🇿", group: "J", phase: "Grupos", featured: true },
+  { id: 20, date: "2026-06-17", time: "01:00", home: "Áustria", homeFlag: "🇦🇹", away: "Jordânia", awayFlag: "🇯🇴", group: "J", phase: "Grupos" },
+  { id: 21, date: "2026-06-17", time: "14:00", home: "Portugal", homeFlag: "🇵🇹", away: "RD Congo/Jamaica/N.Caledônia", awayFlag: "🇨🇩🇯🇲🇳🇨", group: "K", phase: "Grupos" },
+  { id: 22, date: "2026-06-17", time: "17:00", home: "Inglaterra", homeFlag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", away: "Croácia", awayFlag: "🇭🇷", group: "L", phase: "Grupos" },
+  { id: 23, date: "2026-06-17", time: "20:30", home: "Gana", homeFlag: "🇬🇭", away: "Panamá", awayFlag: "🇵🇦", group: "L", phase: "Grupos" },
+  { id: 24, date: "2026-06-17", time: "23:00", home: "Uzbequistão", homeFlag: "🇺🇿", away: "Colômbia", awayFlag: "🇨🇴", group: "K", phase: "Grupos" },
+  { id: 25, date: "2026-06-18", time: "13:00", home: "Tchéquia/Dinamarca", homeFlag: "🇨🇿🇩🇰", away: "África do Sul", awayFlag: "🇿🇦", group: "A", phase: "Grupos" },
+  { id: 26, date: "2026-06-18", time: "16:00", home: "Suíça", homeFlag: "🇨🇭", away: "Bósnia/Itália", awayFlag: "🇧🇦🇮🇹", group: "B", phase: "Grupos" },
+  { id: 27, date: "2026-06-18", time: "19:00", home: "Canadá", homeFlag: "🇨🇦", away: "Qatar", awayFlag: "🇶🇦", group: "B", phase: "Grupos" },
+  { id: 28, date: "2026-06-18", time: "22:00", home: "México", homeFlag: "🇲🇽", away: "Coreia do Sul", awayFlag: "🇰🇷", group: "A", phase: "Grupos" },
+  { id: 29, date: "2026-06-19", time: "16:00", home: "Estados Unidos", homeFlag: "🇺🇸", away: "Austrália", awayFlag: "🇦🇺", group: "D", phase: "Grupos" },
+  { id: 30, date: "2026-06-19", time: "19:00", home: "Escócia", homeFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", away: "Marrocos", awayFlag: "🇲🇦", group: "C", phase: "Grupos" },
+  { id: 31, date: "2026-06-19", time: "22:00", home: "Brasil", homeFlag: "🇧🇷", away: "Haiti", awayFlag: "🇭🇹", group: "C", phase: "Grupos", featured: true },
+  { id: 32, date: "2026-06-20", time: "01:00", home: "Kosovo/Turquia", homeFlag: "🇽🇰🇹🇷", away: "Paraguai", awayFlag: "🇵🇾", group: "D", phase: "Grupos" },
+  { id: 33, date: "2026-06-20", time: "14:00", home: "Holanda", homeFlag: "🇳🇱", away: "Polônia/Suécia", awayFlag: "🇵🇱🇸🇪", group: "F", phase: "Grupos" },
+  { id: 34, date: "2026-06-20", time: "17:00", home: "Alemanha", homeFlag: "🇩🇪", away: "Costa do Marfim", awayFlag: "🇨🇮", group: "E", phase: "Grupos" },
+  { id: 35, date: "2026-06-20", time: "21:00", home: "Equador", homeFlag: "🇪🇨", away: "Curaçao", awayFlag: "🇨🇼", group: "E", phase: "Grupos" },
+  { id: 36, date: "2026-06-21", time: "01:00", home: "Tunísia", homeFlag: "🇹🇳", away: "Japão", awayFlag: "🇯🇵", group: "F", phase: "Grupos" },
+  { id: 37, date: "2026-06-21", time: "13:00", home: "Espanha", homeFlag: "🇪🇸", away: "Arábia Saudita", awayFlag: "🇸🇦", group: "H", phase: "Grupos" },
+  { id: 38, date: "2026-06-21", time: "16:00", home: "Bélgica", homeFlag: "🇧🇪", away: "Irã", awayFlag: "🇮🇷", group: "G", phase: "Grupos" },
+  { id: 39, date: "2026-06-21", time: "19:00", home: "Uruguai", homeFlag: "🇺🇾", away: "Cabo Verde", awayFlag: "🇨🇻", group: "H", phase: "Grupos" },
+  { id: 40, date: "2026-06-21", time: "23:00", home: "Nova Zelândia", homeFlag: "🇳🇿", away: "Egito", awayFlag: "🇪🇬", group: "G", phase: "Grupos" },
+  { id: 41, date: "2026-06-22", time: "14:00", home: "Argentina", homeFlag: "🇦🇷", away: "Áustria", awayFlag: "🇦🇹", group: "J", phase: "Grupos", featured: true },
+  { id: 42, date: "2026-06-22", time: "18:00", home: "França", homeFlag: "🇫🇷", away: "Bolívia/Iraque", awayFlag: "🇧🇴🇮🇶", group: "I", phase: "Grupos" },
+  { id: 43, date: "2026-06-22", time: "21:00", home: "Noruega", homeFlag: "🇳🇴", away: "Senegal", awayFlag: "🇸🇳", group: "I", phase: "Grupos" },
+  { id: 44, date: "2026-06-23", time: "00:00", home: "Jordânia", homeFlag: "🇯🇴", away: "Argélia", awayFlag: "🇩🇿", group: "J", phase: "Grupos" },
+  { id: 45, date: "2026-06-23", time: "14:00", home: "Portugal", homeFlag: "🇵🇹", away: "Uzbequistão", awayFlag: "🇺🇿", group: "K", phase: "Grupos" },
+  { id: 46, date: "2026-06-23", time: "17:00", home: "Inglaterra", homeFlag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", away: "Gana", awayFlag: "🇬🇭", group: "L", phase: "Grupos" },
+  { id: 47, date: "2026-06-23", time: "20:00", home: "Panamá", homeFlag: "🇵🇦", away: "Croácia", awayFlag: "🇭🇷", group: "L", phase: "Grupos" },
+  { id: 48, date: "2026-06-23", time: "23:00", home: "Colômbia", homeFlag: "🇨🇴", away: "RD Congo/Jamaica/N.Caledônia", awayFlag: "🇨🇩🇯🇲🇳🇨", group: "K", phase: "Grupos" },
+  { id: 49, date: "2026-06-24", time: "16:00", home: "Suíça", homeFlag: "🇨🇭", away: "Canadá", awayFlag: "🇨🇦", group: "B", phase: "Grupos" },
+  { id: 50, date: "2026-06-24", time: "16:00", home: "Bósnia/Itália", homeFlag: "🇧🇦🇮🇹", away: "Qatar", awayFlag: "🇶🇦", group: "B", phase: "Grupos" },
+  { id: 51, date: "2026-06-24", time: "19:00", home: "Escócia", homeFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", away: "Brasil", awayFlag: "🇧🇷", group: "C", phase: "Grupos", featured: true },
+  { id: 52, date: "2026-06-24", time: "19:00", home: "Marrocos", homeFlag: "🇲🇦", away: "Haiti", awayFlag: "🇭🇹", group: "C", phase: "Grupos" },
+  { id: 53, date: "2026-06-24", time: "22:00", home: "Tchéquia/Dinamarca", homeFlag: "🇨🇿🇩🇰", away: "México", awayFlag: "🇲🇽", group: "A", phase: "Grupos" },
+  { id: 54, date: "2026-06-24", time: "22:00", home: "África do Sul", homeFlag: "🇿🇦", away: "Coreia do Sul", awayFlag: "🇰🇷", group: "A", phase: "Grupos" },
+  { id: 55, date: "2026-06-25", time: "17:00", home: "Curaçao", homeFlag: "🇨🇼", away: "Costa do Marfim", awayFlag: "🇨🇮", group: "E", phase: "Grupos" },
+  { id: 56, date: "2026-06-25", time: "17:00", home: "Equador", homeFlag: "🇪🇨", away: "Alemanha", awayFlag: "🇩🇪", group: "E", phase: "Grupos" },
+  { id: 57, date: "2026-06-25", time: "20:00", home: "Japão", homeFlag: "🇯🇵", away: "Polônia/Suécia", awayFlag: "🇵🇱🇸🇪", group: "F", phase: "Grupos" },
+  { id: 58, date: "2026-06-25", time: "20:00", home: "Tunísia", homeFlag: "🇹🇳", away: "Holanda", awayFlag: "🇳🇱", group: "F", phase: "Grupos" },
+  { id: 59, date: "2026-06-25", time: "23:00", home: "Kosovo/Turquia", homeFlag: "🇽🇰🇹🇷", away: "Estados Unidos", awayFlag: "🇺🇸", group: "D", phase: "Grupos" },
+  { id: 60, date: "2026-06-25", time: "23:00", home: "Paraguai", homeFlag: "🇵🇾", away: "Austrália", awayFlag: "🇦🇺", group: "D", phase: "Grupos" },
+  { id: 61, date: "2026-06-26", time: "16:00", home: "Noruega", homeFlag: "🇳🇴", away: "França", awayFlag: "🇫🇷", group: "I", phase: "Grupos" },
+  { id: 62, date: "2026-06-26", time: "16:00", home: "Senegal", homeFlag: "🇸🇳", away: "Bolívia/Iraque", awayFlag: "🇧🇴🇮🇶", group: "I", phase: "Grupos" },
+  { id: 63, date: "2026-06-26", time: "21:00", home: "Cabo Verde", homeFlag: "🇨🇻", away: "Arábia Saudita", awayFlag: "🇸🇦", group: "H", phase: "Grupos" },
+  { id: 64, date: "2026-06-26", time: "21:00", home: "Uruguai", homeFlag: "🇺🇾", away: "Espanha", awayFlag: "🇪🇸", group: "H", phase: "Grupos" },
+  { id: 65, date: "2026-06-26", time: "23:00", home: "Nova Zelândia", homeFlag: "🇳🇿", away: "Bélgica", awayFlag: "🇧🇪", group: "G", phase: "Grupos" },
+  { id: 66, date: "2026-06-27", time: "00:00", home: "Egito", homeFlag: "🇪🇬", away: "Irã", awayFlag: "🇮🇷", group: "G", phase: "Grupos" },
+  { id: 67, date: "2026-06-27", time: "18:00", home: "Panamá", homeFlag: "🇵🇦", away: "Inglaterra", awayFlag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", group: "L", phase: "Grupos" },
+  { id: 68, date: "2026-06-27", time: "18:00", home: "Croácia", homeFlag: "🇭🇷", away: "Gana", awayFlag: "🇬🇭", group: "L", phase: "Grupos" },
+  { id: 69, date: "2026-06-27", time: "20:30", home: "Colômbia", homeFlag: "🇨🇴", away: "Portugal", awayFlag: "🇵🇹", group: "K", phase: "Grupos" },
+  { id: 70, date: "2026-06-27", time: "20:30", home: "RD Congo/Jamaica/N.Caledônia", homeFlag: "🇨🇩🇯🇲🇳🇨", away: "Uzbequistão", awayFlag: "🇺🇿", group: "K", phase: "Grupos" },
+  { id: 71, date: "2026-06-27", time: "23:00", home: "Argélia", homeFlag: "🇩🇿", away: "Áustria", awayFlag: "🇦🇹", group: "J", phase: "Grupos" },
+  { id: 72, date: "2026-06-27", time: "23:00", home: "Jordânia", homeFlag: "🇯🇴", away: "Argentina", awayFlag: "🇦🇷", group: "J", phase: "Grupos", featured: true },
+  // Segunda fase
+  { id: 73, date: "2026-06-28", time: "16:00", home: "2º A", homeFlag: "🏆", away: "2º B", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 73 },
+  { id: 74, date: "2026-06-29", time: "17:30", home: "1º E", homeFlag: "🏆", away: "3º A/B/C/D/F", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 74 },
+  { id: 75, date: "2026-06-29", time: "22:00", home: "1º F", homeFlag: "🏆", away: "2º C", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 75 },
+  { id: 76, date: "2026-06-30", time: "14:00", home: "1º C", homeFlag: "🏆", away: "2º F", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 76 },
+  { id: 77, date: "2026-06-30", time: "18:00", home: "1º I", homeFlag: "🏆", away: "3º C/D/F/G/H", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 77 },
+  { id: 78, date: "2026-06-30", time: "14:00", home: "2º E", homeFlag: "🏆", away: "2º I", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 78 },
+  { id: 79, date: "2026-06-30", time: "22:00", home: "1º A", homeFlag: "🏆", away: "3º C/E/F/H/I", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 79 },
+  { id: 80, date: "2026-07-01", time: "13:00", home: "1º L", homeFlag: "🏆", away: "3º E/H/I/J/K", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 80 },
+  { id: 81, date: "2026-07-01", time: "21:00", home: "1º D", homeFlag: "🏆", away: "3º B/E/F/I/J", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 81 },
+  { id: 82, date: "2026-07-01", time: "17:00", home: "1º G", homeFlag: "🏆", away: "3º A/E/H/I/J", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 82 },
+  { id: 83, date: "2026-07-02", time: "20:00", home: "2º K", homeFlag: "🏆", away: "2º L", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 83 },
+  { id: 84, date: "2026-07-02", time: "16:00", home: "1º H", homeFlag: "🏆", away: "2º J", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 84 },
+  { id: 85, date: "2026-07-03", time: "00:00", home: "1º B", homeFlag: "🏆", away: "3º E/F/G/I/J", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 85 },
+  { id: 86, date: "2026-07-03", time: "19:00", home: "1º J", homeFlag: "🏆", away: "2º H", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 86 },
+  { id: 87, date: "2026-07-03", time: "22:30", home: "1º K", homeFlag: "🏆", away: "3º D/E/I/J/L", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 87 },
+  { id: 88, date: "2026-07-03", time: "15:00", home: "2º D", homeFlag: "🏆", away: "2º G", awayFlag: "🏆", group: "-", phase: "2ª Fase", matchNum: 88 },
+  // Oitavas
+  { id: 89, date: "2026-07-04", time: "18:00", home: "Venc. 74", homeFlag: "🏆", away: "Venc. 77", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 89 },
+  { id: 90, date: "2026-07-04", time: "14:00", home: "Venc. 73", homeFlag: "🏆", away: "Venc. 75", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 90 },
+  { id: 91, date: "2026-07-05", time: "17:00", home: "Venc. 76", homeFlag: "🏆", away: "Venc. 78", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 91 },
+  { id: 92, date: "2026-07-05", time: "21:00", home: "Venc. 79", homeFlag: "🏆", away: "Venc. 80", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 92 },
+  { id: 93, date: "2026-07-06", time: "16:00", home: "Venc. 83", homeFlag: "🏆", away: "Venc. 84", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 93 },
+  { id: 94, date: "2026-07-06", time: "21:00", home: "Venc. 81", homeFlag: "🏆", away: "Venc. 82", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 94 },
+  { id: 95, date: "2026-07-07", time: "13:00", home: "Venc. 86", homeFlag: "🏆", away: "Venc. 88", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 95 },
+  { id: 96, date: "2026-07-07", time: "17:00", home: "Venc. 85", homeFlag: "🏆", away: "Venc. 87", awayFlag: "🏆", group: "-", phase: "Oitavas", matchNum: 96 },
+  // Quartas
+  { id: 97, date: "2026-07-09", time: "17:00", home: "Venc. 89", homeFlag: "🏆", away: "Venc. 90", awayFlag: "🏆", group: "-", phase: "Quartas", matchNum: 97 },
+  { id: 98, date: "2026-07-10", time: "16:00", home: "Venc. 93", homeFlag: "🏆", away: "Venc. 94", awayFlag: "🏆", group: "-", phase: "Quartas", matchNum: 98 },
+  { id: 99, date: "2026-07-10", time: "18:00", home: "Venc. 91", homeFlag: "🏆", away: "Venc. 92", awayFlag: "🏆", group: "-", phase: "Quartas", matchNum: 99 },
+  { id: 100, date: "2026-07-11", time: "22:00", home: "Venc. 95", homeFlag: "🏆", away: "Venc. 96", awayFlag: "🏆", group: "-", phase: "Quartas", matchNum: 100 },
+  // Semis
+  { id: 101, date: "2026-07-14", time: "16:00", home: "Venc. 97", homeFlag: "🏆", away: "Venc. 98", awayFlag: "🏆", group: "-", phase: "Semifinal", matchNum: 101 },
+  { id: 102, date: "2026-07-15", time: "16:00", home: "Venc. 99", homeFlag: "🏆", away: "Venc. 100", awayFlag: "🏆", group: "-", phase: "Semifinal", matchNum: 102 },
+  // 3º e Final
+  { id: 103, date: "2026-07-18", time: "18:00", home: "3º Lugar A", homeFlag: "🥉", away: "3º Lugar B", awayFlag: "🥉", group: "-", phase: "3º Lugar", matchNum: 103 },
+  { id: 104, date: "2026-07-19", time: "16:00", home: "Finalista A", homeFlag: "🏆", away: "Finalista B", awayFlag: "🏆", group: "-", phase: "Final", matchNum: 104 },
+];
+
+const PHASES = ["Todos", "Grupos", "2ª Fase", "Oitavas", "Quartas", "Semifinal", "3º Lugar", "Final"];
+const GROUPS = ["Todos", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+
+// ─── CACHE DE RESULTADOS ─────────────────────────────────────────────────────
+const STORAGE_KEY = "copa2026_results_v1";
+const loadCache = () => {
+  try { const d = window.storage; return {}; } catch { return {}; }
+};
+
+// ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
+function Copa2026() {
+  const [results, setResults] = useState({});
+  const [loadingId, setLoadingId] = useState(null);
+  const [activePhase, setActivePhase] = useState("Todos");
+  const [activeGroup, setActiveGroup] = useState("Todos");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [view, setView] = useState("tabela"); // tabela | hoje
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [globalLoading, setGlobalLoading] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
+
+  // Carregar do storage persistente ao montar
+  useEffect(() => {
+    const loadFromStorage = async () => {
+      try {
+        const stored = await window.storage.get(STORAGE_KEY);
+        if (stored?.value) {
+          const parsed = JSON.parse(stored.value);
+          setResults(parsed.results || {});
+          setLastUpdated(parsed.lastUpdated || null);
+        }
+      } catch {}
+    };
+    loadFromStorage();
+  }, []);
+
+  const saveToStorage = async (newResults) => {
+    try {
+      await window.storage.set(STORAGE_KEY, JSON.stringify({
+        results: newResults,
+        lastUpdated: new Date().toISOString()
+      }));
+    } catch {}
+  };
+
+  const fetchResult = useCallback(async (match) => {
+    setLoadingId(match.id);
+    const prompt = `Você é um assistente especializado em futebol. Acesse o site cazé.tv ou cazetv.com.br e busque o resultado do seguinte jogo da Copa do Mundo 2026:
+    
+    ${match.home} x ${match.away}
+    Data: ${match.date} às ${match.time} (horário de Brasília)
+    Fase: ${match.phase} ${match.group !== "-" ? `- Grupo ${match.group}` : ""}
+    
+    Responda SOMENTE com JSON válido no formato abaixo. Se o jogo ainda não aconteceu ou você não encontrou o resultado, retorne status "pending". Se aconteceu, retorne status "finished" com o placar. Se estiver em andamento, status "live".
+    
+    {
+      "status": "pending" | "finished" | "live",
+      "homeScore": número ou null,
+      "awayScore": número ou null,
+      "extra": "texto opcional com pênaltis, prorrogação, artilheiro etc ou null",
+      "source": "cazetv" ou "não encontrado"
+    }
+    
+    Responda APENAS com o JSON, sem markdown, sem explicações.`;
+
+    try {
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          tools: [{ type: "web_search_20250305", name: "web_search" }],
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await resp.json();
+      const textBlock = data.content?.find(b => b.type === "text");
+      if (textBlock?.text) {
+        const clean = textBlock.text.replace(/```json|```/g, "").trim();
+        const parsed = JSON.parse(clean);
+        const updated = { ...results, [match.id]: { ...parsed, fetchedAt: new Date().toISOString() } };
+        setResults(updated);
+        setLastUpdated(new Date().toISOString());
+        await saveToStorage(updated);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingId(null);
+    }
+  }, [results]);
+
+  const fetchAllRecent = useCallback(async () => {
+    setGlobalLoading(true);
+    const today = new Date();
+    const recent = SCHEDULE.filter(m => {
+      const d = new Date(m.date + "T" + m.time.replace(":", ":") + ":00-03:00");
+      const diff = (today - d) / 3600000;
+      return diff > -1 && diff < 48;
+    });
+
+    for (const match of recent) {
+      setLoadingId(match.id);
+      const prompt = `Copa do Mundo 2026 resultado: ${match.home} x ${match.away} em ${match.date} às ${match.time} BRT. Fase: ${match.phase}. Responda SOMENTE JSON: {"status":"pending"|"finished"|"live","homeScore":número|null,"awayScore":número|null,"extra":string|null,"source":string}`;
+      try {
+        const resp = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 500,
+            tools: [{ type: "web_search_20250305", name: "web_search" }],
+            messages: [{ role: "user", content: prompt }]
+          })
+        });
+        const data = await resp.json();
+        const textBlock = data.content?.find(b => b.type === "text");
+        if (textBlock?.text) {
+          const clean = textBlock.text.replace(/```json|```/g, "").trim();
+          const parsed = JSON.parse(clean);
+          setResults(prev => {
+            const updated = { ...prev, [match.id]: { ...parsed, fetchedAt: new Date().toISOString() } };
+            saveToStorage(updated);
+            return updated;
+          });
+        }
+      } catch {}
+    }
+    setLoadingId(null);
+    setGlobalLoading(false);
+    setLastUpdated(new Date().toISOString());
+  }, []);
+
+  // Filtros
+  const filtered = SCHEDULE.filter(m => {
+    if (activePhase !== "Todos" && m.phase !== activePhase) return false;
+    if (activeGroup !== "Todos" && m.group !== activeGroup) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!m.home.toLowerCase().includes(q) && !m.away.toLowerCase().includes(q)) return false;
+    }
+    if (view === "hoje") {
+      const today = new Date().toISOString().split("T")[0];
+      if (m.date !== today) return false;
+    }
+    return true;
+  });
+
+  // Agrupar por data
+  const byDate = {};
+  filtered.forEach(m => {
+    if (!byDate[m.date]) byDate[m.date] = [];
+    byDate[m.date].push(m);
+  });
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr + "T12:00:00");
+    return d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }).replace(".", "").toUpperCase();
+  };
+
+  const getStatusColor = (r) => {
+    if (!r) return "#334155";
+    if (r.status === "live") return "#ef4444";
+    if (r.status === "finished") return "#10b981";
+    return "#334155";
+  };
+
+  const getStatusLabel = (r) => {
+    if (!r) return null;
+    if (r.status === "live") return "AO VIVO";
+    if (r.status === "finished") return "ENCERRADO";
+    return null;
+  };
+
+  const phaseColors = {
+    "Grupos": "#3b82f6",
+    "2ª Fase": "#8b5cf6",
+    "Oitavas": "#f59e0b",
+    "Quartas": "#ef4444",
+    "Semifinal": "#ec4899",
+    "3º Lugar": "#6b7280",
+    "Final": "#f59e0b"
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #0a0f1e 0%, #0d1b2a 50%, #071a0d 100%)",
+      fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif",
+      color: "#e2e8f0",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&family=Barlow:wght@400;500&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #0a0f1e; } ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 2px; }
+        .match-card { transition: all 0.2s ease; cursor: pointer; }
+        .match-card:hover { transform: translateY(-1px); filter: brightness(1.05); }
+        .pill-btn { transition: all 0.15s; cursor: pointer; border: none; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.05em; }
+        .pill-btn:hover { transform: scale(1.05); }
+        .fetch-btn { transition: all 0.2s; cursor: pointer; border: none; font-family: 'Barlow Condensed', sans-serif; }
+        .fetch-btn:hover:not(:disabled) { transform: scale(1.1); }
+        .fetch-btn:disabled { opacity: 0.5; cursor: wait; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .live-dot { animation: pulse 1s infinite; }
+        .spin { animation: spin 1s linear infinite; }
+        .fade-in { animation: fadeIn 0.3s ease; }
+        .glow-green { box-shadow: 0 0 12px rgba(16,185,129,0.3); }
+        .glow-red { box-shadow: 0 0 12px rgba(239,68,68,0.5); }
+        .score-display { font-size: 1.8rem; font-weight: 900; letter-spacing: 0.02em; }
+        .section-header { background: linear-gradient(90deg, rgba(30,58,95,0.6) 0%, transparent 100%); border-left: 3px solid #1d4ed8; }
+      `}</style>
+
+      {/* HEADER */}
+      <header style={{
+        background: "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(10,15,30,0.95) 100%)",
+        borderBottom: "1px solid rgba(255,215,0,0.2)",
+        padding: "16px 20px",
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+        backdropFilter: "blur(10px)",
+      }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <span style={{ fontSize: "2rem", lineHeight: 1 }}>⚽</span>
+                <h1 style={{
+                  fontSize: "clamp(1.4rem, 4vw, 2rem)",
+                  fontWeight: 900,
+                  letterSpacing: "0.04em",
+                  lineHeight: 1,
+                  background: "linear-gradient(90deg, #ffd700, #ffffff, #4ade80)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}>COPA DO MUNDO 2026</h1>
+              </div>
+              {lastUpdated && (
+                <p style={{ fontSize: "0.65rem", color: "#64748b", marginTop: 2, letterSpacing: "0.08em" }}>
+                  ↻ {new Date(lastUpdated).toLocaleString("pt-BR", { day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit" })}
+                </p>
+              )}
+            </div>
+            <button
+              className="fetch-btn"
+              onClick={fetchAllRecent}
+              disabled={globalLoading}
+              style={{
+                background: globalLoading ? "#1e3a5f" : "linear-gradient(135deg, #1d4ed8, #059669)",
+                color: "#fff",
+                padding: "8px 16px",
+                borderRadius: 6,
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              {globalLoading ? (
+                <><span className="spin" style={{ display:"inline-block", fontSize:"0.9rem" }}>↻</span> ATUALIZANDO...</>
+              ) : (
+                <><span>↻</span> ATUALIZAR JOGOS</>
+              )}
+            </button>
+          </div>
+
+          {/* ABAS VISTA */}
+          <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+            {[["tabela", "📋 TABELA COMPLETA"], ["hoje", "📅 HOJE"]].map(([v, label]) => (
+              <button key={v} className="pill-btn" onClick={() => setView(v)} style={{
+                padding: "5px 14px", borderRadius: 20, fontSize: "0.72rem",
+                background: view === v ? "#1d4ed8" : "rgba(255,255,255,0.05)",
+                color: view === v ? "#fff" : "#94a3b8",
+                border: view === v ? "none" : "1px solid rgba(255,255,255,0.1)",
+              }}>{label}</button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <main style={{ maxWidth: 900, margin: "0 auto", padding: "16px 12px" }}>
+
+        {/* FILTROS */}
+        <div style={{ marginBottom: 16 }}>
+          {/* Search */}
+          <input
+            placeholder="🔍 Buscar seleção..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{
+              width: "100%",
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: 8,
+              padding: "8px 14px",
+              color: "#e2e8f0",
+              fontSize: "0.85rem",
+              fontFamily: "Barlow, sans-serif",
+              marginBottom: 10,
+              outline: "none",
+            }}
+          />
+
+          {/* Fases */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
+            {PHASES.map(p => (
+              <button key={p} className="pill-btn" onClick={() => { setActivePhase(p); setActiveGroup("Todos"); }} style={{
+                padding: "4px 10px", borderRadius: 20, fontSize: "0.68rem",
+                background: activePhase === p ? (phaseColors[p] || "#1d4ed8") : "rgba(255,255,255,0.04)",
+                color: activePhase === p ? "#fff" : "#94a3b8",
+                border: activePhase === p ? "none" : "1px solid rgba(255,255,255,0.08)",
+              }}>{p}</button>
+            ))}
+          </div>
+
+          {/* Grupos (só quando fase = Grupos ou Todos) */}
+          {(activePhase === "Todos" || activePhase === "Grupos") && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              {GROUPS.map(g => (
+                <button key={g} className="pill-btn" onClick={() => setActiveGroup(g)} style={{
+                  padding: "3px 9px", borderRadius: 20, fontSize: "0.65rem",
+                  background: activeGroup === g ? "#f59e0b" : "rgba(255,255,255,0.04)",
+                  color: activeGroup === g ? "#000" : "#94a3b8",
+                  border: activeGroup === g ? "none" : "1px solid rgba(255,255,255,0.08)",
+                  fontWeight: 700,
+                }}>Grupo {g === "Todos" ? "✦" : g}</button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* JOGOS */}
+        {Object.keys(byDate).length === 0 ? (
+          <div style={{ textAlign: "center", padding: 60, color: "#475569" }}>
+            <div style={{ fontSize: "3rem", marginBottom: 12 }}>🔍</div>
+            <div style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "0.1em" }}>NENHUM JOGO ENCONTRADO</div>
+          </div>
+        ) : (
+          Object.keys(byDate).sort().map(date => (
+            <div key={date} style={{ marginBottom: 20 }} className="fade-in">
+              {/* Header da data */}
+              <div className="section-header" style={{
+                padding: "6px 14px",
+                borderRadius: "4px 4px 0 0",
+                marginBottom: 1,
+              }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.12em", color: "#93c5fd" }}>
+                  {formatDate(date)}
+                </span>
+              </div>
+
+              {byDate[date].map((match, i) => {
+                const r = results[match.id];
+                const isLoading = loadingId === match.id;
+                const isExpanded = expandedId === match.id;
+                const statusColor = getStatusColor(r);
+                const statusLabel = getStatusLabel(r);
+                const phaseColor = phaseColors[match.phase] || "#3b82f6";
+
+                return (
+                  <div
+                    key={match.id}
+                    className={`match-card ${r?.status === "live" ? "glow-red" : r?.status === "finished" ? "" : ""}`}
+                    onClick={() => setExpandedId(isExpanded ? null : match.id)}
+                    style={{
+                      background: match.featured
+                        ? "linear-gradient(135deg, rgba(250,204,21,0.08) 0%, rgba(16,185,129,0.06) 100%)"
+                        : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${match.featured ? "rgba(250,204,21,0.15)" : "rgba(255,255,255,0.06)"}`,
+                      borderLeft: `3px solid ${r?.status === "finished" ? "#10b981" : r?.status === "live" ? "#ef4444" : phaseColor}`,
+                      borderRadius: i === byDate[date].length - 1 ? "0 0 6px 6px" : 0,
+                      marginBottom: 1,
+                      padding: "10px 14px",
+                      userSelect: "none",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {/* Hora */}
+                      <div style={{ minWidth: 38, textAlign: "center" }}>
+                        <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.05em" }}>{match.time}</div>
+                        {match.group !== "-" && (
+                          <div style={{ fontSize: "0.55rem", color: phaseColor, fontWeight: 800, letterSpacing: "0.1em", marginTop: 1 }}>
+                            GRP {match.group}
+                          </div>
+                        )}
+                        {match.matchNum && (
+                          <div style={{ fontSize: "0.55rem", color: "#64748b", letterSpacing: "0.05em" }}>J{match.matchNum}</div>
+                        )}
+                      </div>
+
+                      {/* Times */}
+                      <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                        {/* Home */}
+                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 5, justifyContent: "flex-end", minWidth: 0 }}>
+                          <span style={{ fontSize: "0.82rem", fontWeight: r?.status === "finished" && r.homeScore > r.awayScore ? 800 : 500, color: r?.status === "finished" && r.homeScore > r.awayScore ? "#fff" : "#cbd5e1", textAlign: "right", letterSpacing: "0.02em", lineHeight: 1.2 }}>
+                            {match.home}
+                          </span>
+                          <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>{match.homeFlag}</span>
+                        </div>
+
+                        {/* Placar / VS */}
+                        <div style={{ minWidth: 60, textAlign: "center" }}>
+                          {r?.status === "finished" || r?.status === "live" ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
+                              {r?.status === "live" && <span className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", display: "inline-block" }} />}
+                              <span className="score-display" style={{ color: r?.status === "live" ? "#ef4444" : "#fff" }}>
+                                {r.homeScore ?? "?"} <span style={{ color: "#475569", fontSize: "1rem" }}>–</span> {r.awayScore ?? "?"}
+                              </span>
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: "0.8rem", color: "#334155", fontWeight: 700, letterSpacing: "0.05em" }}>vs</span>
+                          )}
+                          {statusLabel && (
+                            <div style={{ fontSize: "0.5rem", fontWeight: 800, letterSpacing: "0.12em", color: r?.status === "live" ? "#ef4444" : "#10b981", marginTop: 2 }}>
+                              {statusLabel}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Away */}
+                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                          <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>{match.awayFlag}</span>
+                          <span style={{ fontSize: "0.82rem", fontWeight: r?.status === "finished" && r.awayScore > r.homeScore ? 800 : 500, color: r?.status === "finished" && r.awayScore > r.homeScore ? "#fff" : "#cbd5e1", letterSpacing: "0.02em", lineHeight: 1.2 }}>
+                            {match.away}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Botão buscar */}
+                      <button
+                        className="fetch-btn"
+                        onClick={e => { e.stopPropagation(); fetchResult(match); }}
+                        disabled={isLoading || globalLoading}
+                        title="Buscar resultado"
+                        style={{
+                          background: "rgba(255,255,255,0.06)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: 6,
+                          padding: "5px 8px",
+                          fontSize: "0.85rem",
+                          color: "#94a3b8",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isLoading ? <span className="spin" style={{ display: "inline-block" }}>↻</span> : "↻"}
+                      </button>
+                    </div>
+
+                    {/* Detalhes expandidos */}
+                    {isExpanded && r && (
+                      <div className="fade-in" style={{
+                        marginTop: 8,
+                        paddingTop: 8,
+                        borderTop: "1px solid rgba(255,255,255,0.06)",
+                        fontSize: "0.75rem",
+                        color: "#64748b",
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                      }}>
+                        {r.extra && <span style={{ color: "#94a3b8" }}>📋 {r.extra}</span>}
+                        {r.source && <span>Fonte: {r.source}</span>}
+                        {r.fetchedAt && <span>Consultado: {new Date(r.fetchedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        )}
+
+        {/* LEGENDA */}
+        <div style={{
+          marginTop: 24,
+          padding: "12px 16px",
+          background: "rgba(255,255,255,0.02)",
+          borderRadius: 8,
+          border: "1px solid rgba(255,255,255,0.05)",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 16,
+          fontSize: "0.65rem",
+          color: "#475569",
+          letterSpacing: "0.06em",
+        }}>
+          <span>🟢 Encerrado</span>
+          <span>🔴 Ao Vivo</span>
+          <span>⭐ Jogo destaque (Brasil, Argentina)</span>
+          <span>↻ Buscar resultado individual</span>
+          <span>Clique no jogo para ver detalhes</span>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+    // localStorage as storage shim (no window.storage in standalone)
+    window.storage = {
+      get: async (key) => {
+        try {
+          const val = localStorage.getItem(key);
+          return val ? { key, value: val } : null;
+        } catch { return null; }
+      },
+      set: async (key, value) => {
+        try {
+          localStorage.setItem(key, value);
+          return { key, value };
+        } catch { return null; }
+      },
+      delete: async (key) => {
+        try { localStorage.removeItem(key); return { key, deleted: true }; } catch { return null; }
+      }
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(Copa2026));
+  </script>
+
+  <!-- PWA Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#0a0f1e"/>
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#ffd700" stroke-width="16"/>
+  <circle cx="256" cy="256" r="160" fill="#0d1b2a"/>
+  <!-- football pattern -->
+  <polygon points="256,100 300,140 280,190 230,190 210,140" fill="#ffffff" stroke="#0a0f1e" stroke-width="6"/>
+  <polygon points="390,190 360,230 310,220 295,170 340,145" fill="#ffffff" stroke="#0a0f1e" stroke-width="6"/>
+  <polygon points="370,320 330,345 300,315 315,265 365,255" fill="#ffffff" stroke="#0a0f1e" stroke-width="6"/>
+  <polygon points="256,390 215,365 215,315 256,295 297,315 297,365" fill="#ffffff" stroke="#0a0f1e" stroke-width="6"/>
+  <polygon points="142,320 147,255 197,265 212,315 182,345" fill="#ffffff" stroke="#0a0f1e" stroke-width="6"/>
+  <polygon points="122,190 168,145 213,170 198,220 148,230" fill="#ffffff" stroke="#0a0f1e" stroke-width="6"/>
+  <text x="256" y="470" text-anchor="middle" font-family="Arial" font-size="48" font-weight="bold" fill="#ffd700">2026</text>
+</svg>

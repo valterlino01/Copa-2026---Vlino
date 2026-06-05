@@ -376,7 +376,7 @@ function BolaoTab({ user, bets, results, onSaveBet, savingId }) {
   const byDate = {};
   filtered.forEach(m => { if(!byDate[m.date]) byDate[m.date]=[]; byDate[m.date].push(m); });
   const myTotal = SCHEDULE.reduce((acc,m) => {
-    const r = results[m.id]; const b = bets[m.id];
+    const r = results[String(m.id)]; const b = bets[String(m.id)];
     if(!r||!b) return acc;
     const s = calcScore(b,r); return acc + (s?.points||0);
   },0);
@@ -416,7 +416,7 @@ function BolaoTab({ user, bets, results, onSaveBet, savingId }) {
             <span style={{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.12em",color:"#93c5fd"}}>{formatDate(date)}</span>
           </div>
           {byDate[date].map(m=>(
-            <MatchBet key={m.id} match={m} myBet={bets[m.id]} result={results[m.id]}
+            <MatchBet key={m.id} match={m} myBet={bets[String(m.id)]} result={results[String(m.id)]}
               onSaveBet={onSaveBet} saving={savingId===m.id}/>
           ))}
         </div>
@@ -436,7 +436,7 @@ function RankingTab({ allBets, results, currentUser }) {
     Object.entries(allBets).forEach(([user, bets]) => {
       let pts = 0, exact = 0, winner = 0, count = 0;
       SCHEDULE.forEach(m => {
-        const r = results[m.id]; const b = bets[m.id];
+        const r = results[String(m.id)]; const b = bets[String(m.id)];
         if (!r || !b) return;
         const s = calcScore(b, r); if (!s) return;
         pts += s.points; count++;
@@ -473,8 +473,8 @@ function RankingTab({ allBets, results, currentUser }) {
               <span style={{fontSize:"0.72rem",color:"#f59e0b"}}>{detail.winner} acertou vencedor</span>
             </div>
           </div>
-          {SCHEDULE.filter(m=>detail.bets[m.id]).map(m => {
-            const b = detail.bets[m.id]; const r = results[m.id];
+          {SCHEDULE.filter(m=>detail.bets[String(m.id)]).map(m => {
+            const b = detail.bets[String(m.id)]; const r = results[String(m.id)];
             const s = r?.homeScore!==undefined ? calcScore(b,r) : null;
             return (
               <div key={m.id} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:6,padding:"8px 12px",marginBottom:2,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -559,7 +559,7 @@ function TabelaTab({ results, onFetch, fetchingId, globalFetching }) {
             <span style={{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.12em",color:"#93c5fd"}}>{formatDate(date)}</span>
           </div>
           {byDate[date].map((m,i)=>{
-            const r = results[m.id]; const loading = fetchingId===m.id; const ph = PHASE_COLORS[m.phase]||"#3b82f6";
+            const r = results[String(m.id)]; const loading = fetchingId===m.id; const ph = PHASE_COLORS[m.phase]||"#3b82f6";
             return (
               <div key={m.id} style={{
                 background:m.featured?"linear-gradient(135deg,rgba(250,204,21,0.07),rgba(16,185,129,0.05))":"rgba(255,255,255,0.03)",
@@ -664,7 +664,7 @@ function AdminPanel({ results, allBets, onSetResult, onClose }) {
             <div key={m.id} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:"10px 12px",marginBottom:8}}>
               <div style={{fontSize:"0.8rem",fontWeight:700,color:"#fff",marginBottom:6}}>{m.homeFlag} {m.home} × {m.away} {m.awayFlag} <span style={{color:"#64748b",fontWeight:400,fontSize:"0.7rem"}}>{m.date} {m.time}</span></div>
               {gameBets.map(([user,bets])=>{
-                const b=bets[m.id]; const r=results[m.id]; const s=r?.homeScore!==undefined?calcScore(b,r):null;
+                const b=bets[String(m.id)]; const r=results[String(m.id)]; const s=r?.homeScore!==undefined?calcScore(b,r):null;
                 return (
                   <div key={user} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
                     <span style={{fontSize:"0.78rem",color:"#94a3b8"}}>{user}</span>
@@ -731,7 +731,7 @@ function App() {
     if (!db || !user) return;
     setSavingId(matchId);
     try {
-      await db.collection("bets").doc(user).set({ [matchId]: { homeScore: h, awayScore: a, at: new Date().toISOString() } }, { merge: true });
+      await db.collection("bets").doc(user).set({ [String(matchId)]: { homeScore: h, awayScore: a, at: new Date().toISOString() } }, { merge: true });
     } catch(e) { console.error(e); }
     setSavingId(null);
   }, [user]);
@@ -739,7 +739,7 @@ function App() {
   // Definir resultado (admin)
   const handleSetResult = useCallback(async (matchId, h, a) => {
     if (!db) return;
-    await db.collection("results").doc("official").set({ [matchId]: { homeScore: h, awayScore: a, status: "finished", updatedAt: new Date().toISOString() } }, { merge: true });
+    await db.collection("results").doc("official").set({ [String(matchId)]: { homeScore: h, awayScore: a, status: "finished", updatedAt: new Date().toISOString() } }, { merge: true });
   }, []);
 
   // Buscar resultado via Claude API

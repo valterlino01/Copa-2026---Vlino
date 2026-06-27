@@ -20,21 +20,21 @@ No código, a fase de 16avos é rotulada como `"2ª Fase"` (legado). As fases no
 
 ## Chaveamento oficial dos 16avos (16 chaves)
 
-Mapeamento confirmado e corrigido (o SCHEDULE original estava errado):
+Mapeamento confirmado contra a fonte oficial (Wikipedia "2026 FIFA World Cup knockout stage" / Regulamento FIFA). As imagens iniciais do GE estavam erradas — ver changelog v5.
 
 ```
-Chave 1 (jogo 73): 1ºA × 2ºB      Chave 9  (jogo 81): 1ºB × Melhor 3º
-Chave 2 (jogo 74): 1ºC × 2ºF      Chave 10 (jogo 82): 1ºD × 2ºH
-Chave 3 (jogo 75): 1ºE × Melhor3º Chave 11 (jogo 83): 1ºF × 2ºC
-Chave 4 (jogo 76): 1ºG × Melhor3º Chave 12 (jogo 84): 1ºH × Melhor 3º
-Chave 5 (jogo 77): 1ºI × Melhor3º Chave 13 (jogo 85): 1ºJ × Melhor 3º
-Chave 6 (jogo 78): 1ºK × Melhor3º Chave 14 (jogo 86): 1ºL × Melhor 3º
-Chave 7 (jogo 79): 2ºA × 2ºC      Chave 15 (jogo 87): 2ºD × 2ºG
-Chave 8 (jogo 80): 2ºE × 2ºI      Chave 16 (jogo 88): 2ºJ × 2ºL
+Chave 1 (jogo 73): 2ºA × 2ºB       Chave 9  (jogo 81): 1ºD × Melhor 3º
+Chave 2 (jogo 74): 1ºE × Melhor 3º Chave 10 (jogo 82): 1ºG × Melhor 3º
+Chave 3 (jogo 75): 1ºF × 2ºC       Chave 11 (jogo 83): 2ºK × 2ºL
+Chave 4 (jogo 76): 1ºC × 2ºF       Chave 12 (jogo 84): 1ºH × 2ºJ
+Chave 5 (jogo 77): 1ºI × Melhor 3º Chave 13 (jogo 85): 1ºB × Melhor 3º
+Chave 6 (jogo 78): 2ºE × 2ºI       Chave 14 (jogo 86): 1ºJ × 2ºH
+Chave 7 (jogo 79): 1ºA × Melhor 3º Chave 15 (jogo 87): 1ºK × Melhor 3º
+Chave 8 (jogo 80): 1ºL × Melhor 3º Chave 16 (jogo 88): 2ºD × 2ºG
 ```
 
-Oitavas: A(ch1×ch2) B(ch3×ch4) C(ch5×ch6) D(ch7×ch8) E(ch9×ch10) F(ch11×ch12) G(ch13×ch14) H(ch15×ch16).
-Quartas: Q1(oitA×oitB) Q2(oitC×oitD) Q3(oitE×oitF) Q4(oitG×oitH).
+Oitavas (oficial FIFA): A=W74×W77 · B=W73×W75 · C=W76×W78 · D=W79×W80 · E=W83×W84 · F=W81×W82 · G=W86×W88 · H=W85×W87.
+Quartas: Q1=W89×W90 · Q2=W93×W94 · Q3=W91×W92 · Q4=W95×W96.
 Semis: SF1(Q1×Q2) SF2(Q3×Q4). 3º lugar: perdedores das semis. Final: vencedores das semis.
 
 ## Estrutura de dados (SCHEDULE)
@@ -202,3 +202,23 @@ Versão base: login por apelido, palpites da fase de grupos, ranking, tabela ger
 ### v4 — 2026-06-27 (correções pós-teste em produção)
 - **Bug aba Bolão (mata-mata sem times):** o `BolaoTab`/`MatchBet` mostrava os nomes estáticos dos slots ("1º A") nos jogos de mata-mata. Agora resolve os slots via `resolveKnockoutMatch` (recebe `manualOrder`/`manualThirds`), exibe o time real quando definido, mostra em amarelo/itálico quando ainda pendente, e inclui o seletor de "quem avança" em empates — igual à aba Chave.
 - **Bug Marrocos duplicado:** o slot "2º C" aparecia em duas chaves (7 e 11) e o "2º K" não aparecia em nenhuma — erro herdado das imagens-fonte (ambas escritas como "2º C"). Corrigido para Chave 11 = `1ºF × 2ºK`, única correção que torna o bracket matematicamente válido (todos os 12 segundos colocados aparecem exatamente 1×). ATENÇÃO: a escolha de qual chave (7 ou 11) recebe o 2ºK é dedução por consistência, não confirmação da FIFA — convém validar o pareamento oficial. Se a fonte indicar o contrário, basta trocar os grupos das chaves 7 e 11.
+
+### v5 — 2026-06-27 (chaveamento oficial FIFA)
+**Correção crítica.** Descoberto via fonte oficial (Wikipedia "2026 FIFA World Cup knockout stage" / Regulamento FIFA) que o chaveamento dos 16avos transcrito das imagens do GE estava majoritariamente errado — não era só a duplicata do Marrocos. Reconstruídos os jogos 73–104 com o mapeamento oficial:
+
+```
+Ch1 (73): 2ºA × 2ºB        Ch9  (81): 1ºD × Melhor 3º
+Ch2 (74): 1ºE × Melhor 3º  Ch10 (82): 1ºG × Melhor 3º
+Ch3 (75): 1ºF × 2ºC        Ch11 (83): 2ºK × 2ºL
+Ch4 (76): 1ºC × 2ºF        Ch12 (84): 1ºH × 2ºJ
+Ch5 (77): 1ºI × Melhor 3º  Ch13 (85): 1ºB × Melhor 3º
+Ch6 (78): 2ºE × 2ºI        Ch14 (86): 1ºJ × 2ºH
+Ch7 (79): 1ºA × Melhor 3º  Ch15 (87): 1ºK × Melhor 3º
+Ch8 (80): 1ºL × Melhor 3º  Ch16 (88): 2ºD × 2ºG
+```
+
+Oitavas (propagação oficial): A=W74×W77 · B=W73×W75 · C=W76×W78 · D=W79×W80 · E=W83×W84 · F=W81×W82 · G=W86×W88 · H=W85×W87. Quartas: Q1=W89×W90 · Q2=W93×W94 · Q3=W91×W92 · Q4=W95×W96. Semis: SF1=W97×W98 · SF2=W99×W100. Datas/horários também atualizados conforme cronograma oficial.
+
+Validado: sem duplicatas, cada grupo com exatamente 2 referências, 8 vagas de melhor 3º, propagação das oitavas conferida contra a FIFA.
+
+**Nota sobre a v4:** a correção anterior (Ch11 2ºC→2ºK) era insuficiente — o mapeamento inteiro precisou ser refeito. Esta v5 substitui aquela.

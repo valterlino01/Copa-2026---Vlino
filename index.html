@@ -141,7 +141,7 @@ const SCHEDULE = [
   {id:80,date:"2026-06-30",time:"16:00",home:"2º E",homeFlag:"🏆",away:"2º I",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:80,chaveNum:8,homeSlot:{"t":"group","pos":2,"g":"E"},awaySlot:{"t":"group","pos":2,"g":"I"}},
   {id:81,date:"2026-06-30",time:"19:00",home:"1º B",homeFlag:"🏆",away:"Melhor 3º",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:81,chaveNum:9,homeSlot:{"t":"group","pos":1,"g":"B"},awaySlot:{"t":"third"}},
   {id:82,date:"2026-07-01",time:"13:00",home:"1º D",homeFlag:"🏆",away:"2º H",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:82,chaveNum:10,homeSlot:{"t":"group","pos":1,"g":"D"},awaySlot:{"t":"group","pos":2,"g":"H"}},
-  {id:83,date:"2026-07-01",time:"16:00",home:"1º F",homeFlag:"🏆",away:"2º C",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:83,chaveNum:11,homeSlot:{"t":"group","pos":1,"g":"F"},awaySlot:{"t":"group","pos":2,"g":"C"}},
+  {id:83,date:"2026-07-01",time:"16:00",home:"1º F",homeFlag:"🏆",away:"2º K",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:83,chaveNum:11,homeSlot:{"t":"group","pos":1,"g":"F"},awaySlot:{"t":"group","pos":2,"g":"K"}},
   {id:84,date:"2026-07-01",time:"19:00",home:"1º H",homeFlag:"🏆",away:"Melhor 3º",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:84,chaveNum:12,homeSlot:{"t":"group","pos":1,"g":"H"},awaySlot:{"t":"third"}},
   {id:85,date:"2026-07-02",time:"13:00",home:"1º J",homeFlag:"🏆",away:"Melhor 3º",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:85,chaveNum:13,homeSlot:{"t":"group","pos":1,"g":"J"},awaySlot:{"t":"third"}},
   {id:86,date:"2026-07-02",time:"16:00",home:"1º L",homeFlag:"🏆",away:"Melhor 3º",awayFlag:"🏆",group:"-",phase:"2ª Fase",matchNum:86,chaveNum:14,homeSlot:{"t":"group","pos":1,"g":"L"},awaySlot:{"t":"third"}},
@@ -448,15 +448,34 @@ function LoginScreen({ onLogin }) {
 // ══════════════════════════════════════════════════════
 // COMPONENTE DE JOGO (bolão)
 // ══════════════════════════════════════════════════════
-function MatchBet({ match, myBet, result, onSaveBet, saving }) {
+function MatchBet({ match, myBet, result, onSaveBet, saving, resolved }) {
   const [h, setH] = useState(myBet?.homeScore ?? "");
   const [a, setA] = useState(myBet?.awayScore ?? "");
+  const [adv, setAdv] = useState(myBet?.advance ?? "");
   const locked = isLocked(match);
   const mins = minsToLock(match);
   const phaseColor = PHASE_COLORS[match.phase] || "#3b82f6";
+  const isKO = match.phase !== "Grupos";
   const score = myBet && result?.homeScore !== null && result?.homeScore !== undefined
     ? scoreMatch({homeScore: myBet.homeScore, awayScore: myBet.awayScore, advance: myBet.advance}, result, match) : null;
-  const changed = String(h) !== String(myBet?.homeScore ?? "") || String(a) !== String(myBet?.awayScore ?? "");
+
+  // Nomes resolvidos (mata-mata) ou estáticos (grupos)
+  const homeName = resolved?.home?.team || match.home;
+  const awayName = resolved?.away?.team || match.away;
+  const homeFlag = resolved?.home?.flag || match.homeFlag;
+  const awayFlag = resolved?.away?.flag || match.awayFlag;
+  const homePending = isKO && !resolved?.home;
+  const awayPending = isKO && !resolved?.away;
+  const anyPending = homePending || awayPending;
+
+  const isDraw = h!=="" && a!=="" && parseInt(h)===parseInt(a);
+  const changed = String(h) !== String(myBet?.homeScore ?? "") || String(a) !== String(myBet?.awayScore ?? "") || String(adv) !== String(myBet?.advance ?? "");
+  const canSave = h!=="" && a!=="" && (!isKO || !isDraw || adv!=="");
+
+  const doSave = () => {
+    const advance = isKO ? (isDraw ? adv : (parseInt(h)>parseInt(a)?"home":"away")) : undefined;
+    onSaveBet(match.id, parseInt(h), parseInt(a), advance);
+  };
 
   return (
     <div style={{
@@ -466,17 +485,15 @@ function MatchBet({ match, myBet, result, onSaveBet, saving }) {
       borderRadius:6, padding:"10px 12px", marginBottom:2,
     }}>
       <div style={{display:"flex",alignItems:"center",gap:6}}>
-        {/* Hora + grupo */}
         <div style={{minWidth:36,textAlign:"center",flexShrink:0}}>
           <div style={{fontSize:"0.72rem",fontWeight:700,color:"#94a3b8"}}>{match.time}</div>
-          {match.group!=="-"&&<div style={{fontSize:"0.52rem",color:phaseColor,fontWeight:800}}>G{match.group}</div>}
+          {match.group!=="-" ? <div style={{fontSize:"0.52rem",color:phaseColor,fontWeight:800}}>G{match.group}</div>
+            : <div style={{fontSize:"0.5rem",color:phaseColor,fontWeight:800}}>{match.chaveNum?("CH"+match.chaveNum):match.oitava?("OIT "+match.oitava):match.quartaNum?("QF"+match.quartaNum):match.semiNum?("SF"+match.semiNum):match.phase==="Final"?"FINAL":match.phase==="3º Lugar"?"3º":""}</div>}
         </div>
-        {/* Home */}
         <div style={{flex:1,display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end",minWidth:0}}>
-          <span style={{fontSize:"0.78rem",color:"#cbd5e1",textAlign:"right",lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{match.home}</span>
-          <span style={{fontSize:"1rem",flexShrink:0}}>{match.homeFlag}</span>
+          <span style={{fontSize:"0.78rem",textAlign:"right",lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:homePending?"#fbbf24":"#cbd5e1",fontStyle:homePending?"italic":"normal"}}>{homeName}</span>
+          <span style={{fontSize:"1rem",flexShrink:0}}>{homeFlag}</span>
         </div>
-        {/* Inputs palpite */}
         <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
           {locked ? (
             <div style={{minWidth:64,textAlign:"center"}}>
@@ -484,9 +501,7 @@ function MatchBet({ match, myBet, result, onSaveBet, saving }) {
                 <span style={{fontSize:"1.4rem",fontWeight:900,color:score?.points>0?"#4ade80":"#fff"}}>
                   {myBet.homeScore} <span style={{color:"#475569",fontSize:"0.9rem"}}>–</span> {myBet.awayScore}
                 </span>
-              ) : (
-                <span style={{fontSize:"0.7rem",color:"#475569"}}>sem palpite</span>
-              )}
+              ) : <span style={{fontSize:"0.7rem",color:"#475569"}}>sem palpite</span>}
             </div>
           ) : (
             <div style={{display:"flex",alignItems:"center",gap:3}}>
@@ -498,28 +513,22 @@ function MatchBet({ match, myBet, result, onSaveBet, saving }) {
             </div>
           )}
         </div>
-        {/* Away */}
         <div style={{flex:1,display:"flex",alignItems:"center",gap:4,minWidth:0}}>
-          <span style={{fontSize:"1rem",flexShrink:0}}>{match.awayFlag}</span>
-          <span style={{fontSize:"0.78rem",color:"#cbd5e1",lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{match.away}</span>
+          <span style={{fontSize:"1rem",flexShrink:0}}>{awayFlag}</span>
+          <span style={{fontSize:"0.78rem",lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:awayPending?"#fbbf24":"#cbd5e1",fontStyle:awayPending?"italic":"normal"}}>{awayName}</span>
         </div>
-        {/* Ação / status */}
         <div style={{flexShrink:0,minWidth:44,textAlign:"right"}}>
           {locked ? (
             score ? (
-              <span style={{fontSize:"0.85rem",fontWeight:900,color:score.points>=5?"#ffd700":score.points>=3?"#4ade80":score.points>=1?"#f59e0b":"#475569"}}>
-                {score.points>0?`+${score.points}`:"✗"}
-              </span>
+              <span style={{fontSize:"0.85rem",fontWeight:900,color:score.points>=5?"#ffd700":score.points>=3?"#4ade80":score.points>=1?"#f59e0b":"#475569"}}>{score.points>0?`+${score.points}`:"✗"}</span>
             ) : (
               result?.homeScore!==undefined ? <span style={{fontSize:"0.65rem",color:"#475569"}}>aguard.</span>
               : <span style={{fontSize:"0.65rem",color:"#475569"}}>🔒</span>
             )
           ) : (
-            changed && h!=="" && a!=="" ? (
-              <button onClick={()=>onSaveBet(match.id,parseInt(h),parseInt(a))} disabled={saving}
-                style={{background:"#1d4ed8",border:"none",borderRadius:6,padding:"4px 8px",color:"#fff",fontSize:"0.7rem",fontWeight:700,cursor:"pointer",letterSpacing:"0.04em"}}>
-                {saving?"...":"SALVAR"}
-              </button>
+            changed && canSave ? (
+              <button onClick={doSave} disabled={saving}
+                style={{background:"#1d4ed8",border:"none",borderRadius:6,padding:"4px 8px",color:"#fff",fontSize:"0.7rem",fontWeight:700,cursor:"pointer",letterSpacing:"0.04em"}}>{saving?"...":"SALVAR"}</button>
             ) : (
               mins <= 60 && mins > 0 ? <span style={{fontSize:"0.6rem",color:"#f59e0b"}}>🕐{mins}min</span>
               : myBet?.homeScore!==undefined ? <span style={{fontSize:"0.65rem",color:"#10b981"}}>✓</span>
@@ -528,11 +537,24 @@ function MatchBet({ match, myBet, result, onSaveBet, saving }) {
           )}
         </div>
       </div>
-      {/* resultado real */}
+
+      {/* Seletor quem avança (mata-mata empatado) */}
+      {!locked && isKO && isDraw && (
+        <div style={{marginTop:6,display:"flex",alignItems:"center",gap:6,justifyContent:"center",flexWrap:"wrap"}}>
+          <span style={{fontSize:"0.62rem",color:"#fbbf24"}}>Empate! Quem avança (pênaltis)?</span>
+          <button onClick={()=>setAdv("home")} style={{padding:"3px 8px",borderRadius:6,border:"none",fontSize:"0.62rem",fontWeight:700,cursor:"pointer",background:adv==="home"?"#1d4ed8":"rgba(255,255,255,0.06)",color:adv==="home"?"#fff":"#94a3b8"}}>{homeFlag} {homeName}</button>
+          <button onClick={()=>setAdv("away")} style={{padding:"3px 8px",borderRadius:6,border:"none",fontSize:"0.62rem",fontWeight:700,cursor:"pointer",background:adv==="away"?"#1d4ed8":"rgba(255,255,255,0.06)",color:adv==="away"?"#fff":"#94a3b8"}}>{awayFlag} {awayName}</button>
+        </div>
+      )}
+      {/* Aviso slot pendente */}
+      {!locked && anyPending && (
+        <div style={{marginTop:5,fontSize:"0.58rem",color:"#fbbf24",textAlign:"center"}}>⚠ Confronto ainda não definido — você já pode palpitar o placar; o time aparece quando a fase anterior fechar.</div>
+      )}
+
       {result?.homeScore!==undefined && result?.homeScore!==null && (
         <div style={{marginTop:4,paddingTop:4,borderTop:"1px solid rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <span style={{fontSize:"0.62rem",color:"#475569",letterSpacing:"0.06em"}}>RESULTADO OFICIAL</span>
-          <span style={{fontSize:"0.85rem",fontWeight:900,color:"#10b981"}}>{result.homeScore} – {result.awayScore}</span>
+          <span style={{fontSize:"0.85rem",fontWeight:900,color:"#10b981"}}>{result.homeScore} – {result.awayScore}{isKO && parseInt(result.homeScore)===parseInt(result.awayScore) && result.advance && <span style={{fontSize:"0.58rem",color:"#fbbf24",marginLeft:5}}>(pen)</span>}</span>
           {score && <span style={{fontSize:"0.62rem",color:score.points>0?"#4ade80":"#64748b"}}>{score.label}</span>}
         </div>
       )}
@@ -543,9 +565,12 @@ function MatchBet({ match, myBet, result, onSaveBet, saving }) {
 // ══════════════════════════════════════════════════════
 // ABA BOLÃO
 // ══════════════════════════════════════════════════════
-function BolaoTab({ user, bets, results, onSaveBet, savingId }) {
+function BolaoTab({ user, bets, results, onSaveBet, savingId, manualOrder, manualThirds }) {
   const [filter, setFilter] = useState("proximos"); // proximos | todos | encerrados
   const now = Date.now();
+  const koTables = useMemo(() => computeAllGroups(results, manualOrder), [results, manualOrder]);
+  const koThirds = useMemo(() => computeThirdsRanking(koTables), [koTables]);
+  const koCtx = { tables: koTables, thirdsRanking: koThirds, results, manualThirds };
   const filtered = SCHEDULE.filter(m => {
     const dt = getMatchDateTime(m).getTime();
     if (filter === "proximos") return dt > now - 7200000 && dt < now + 86400000*3;
@@ -596,6 +621,7 @@ function BolaoTab({ user, bets, results, onSaveBet, savingId }) {
           </div>
           {byDate[date].map(m=>(
             <MatchBet key={m.id} match={m} myBet={bets[m.id]} result={results[m.id]}
+              resolved={m.phase!=="Grupos" ? resolveKnockoutMatch(m, koCtx) : null}
               onSaveBet={onSaveBet} saving={savingId===m.id}/>
           ))}
         </div>
@@ -1324,7 +1350,7 @@ function App() {
       </header>
 
       <main style={{maxWidth:700,margin:"0 auto",padding:"14px 12px",paddingBottom:32}}>
-        {tab==="bolao"&&<BolaoTab user={user} bets={bets} results={results} onSaveBet={handleSaveBet} savingId={savingId}/>}
+        {tab==="bolao"&&<BolaoTab user={user} bets={bets} results={results} onSaveBet={handleSaveBet} savingId={savingId} manualOrder={manualOrder} manualThirds={manualThirds}/>}
         {tab==="classif"&&<ClassificacaoTab results={results} manualOrder={manualOrder}/>}
         {tab==="chave"&&<ChaveamentoTab results={results} bets={bets} onSaveBet={handleSaveBet} savingId={savingId} manualOrder={manualOrder} manualThirds={manualThirds}/>}
         {tab==="ranking"&&<RankingTab allBets={allBets} results={results} currentUser={user}/>}

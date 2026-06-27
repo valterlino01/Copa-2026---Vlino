@@ -198,3 +198,7 @@ Correções de bugs e configuração.
 
 ### v1 — anterior
 Versão base: login por apelido, palpites da fase de grupos, ranking, tabela geral, painel admin, integração Firebase + API Anthropic para busca de resultados. Estrutura de mata-mata presente mas com chaveamento incorreto e sem classificação/propagação.
+
+### v4 — 2026-06-27 (correções pós-teste em produção)
+- **Bug aba Bolão (mata-mata sem times):** o `BolaoTab`/`MatchBet` mostrava os nomes estáticos dos slots ("1º A") nos jogos de mata-mata. Agora resolve os slots via `resolveKnockoutMatch` (recebe `manualOrder`/`manualThirds`), exibe o time real quando definido, mostra em amarelo/itálico quando ainda pendente, e inclui o seletor de "quem avança" em empates — igual à aba Chave.
+- **Bug Marrocos duplicado:** o slot "2º C" aparecia em duas chaves (7 e 11) e o "2º K" não aparecia em nenhuma — erro herdado das imagens-fonte (ambas escritas como "2º C"). Corrigido para Chave 11 = `1ºF × 2ºK`, única correção que torna o bracket matematicamente válido (todos os 12 segundos colocados aparecem exatamente 1×). ATENÇÃO: a escolha de qual chave (7 ou 11) recebe o 2ºK é dedução por consistência, não confirmação da FIFA — convém validar o pareamento oficial. Se a fonte indicar o contrário, basta trocar os grupos das chaves 7 e 11.

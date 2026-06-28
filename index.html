@@ -814,6 +814,15 @@ function AdminPanel({ results, allBets, onSetResult, onSetThird, onSetGroupOrder
 
   const tables = useMemo(() => computeAllGroups(results, manualOrder), [results, manualOrder]);
   const thirdsRanking = useMemo(() => computeThirdsRanking(tables), [tables]);
+  const koCtx = { tables, thirdsRanking, results, manualThirds };
+  // Nome de exibicao de um jogo: usa seleções resolvidas quando já definidas
+  const matchLabel = (m) => {
+    if (m.phase === "Grupos") return m.home + " × " + m.away;
+    const r = resolveKnockoutMatch(m, koCtx);
+    const hn = r.home?.team || m.home;
+    const an = r.away?.team || m.away;
+    return hn + " × " + an;
+  };
 
   const selIsKO = sel && sel.phase !== "Grupos";
   const selIsDraw = sel && h!=="" && a!=="" && parseInt(h)===parseInt(a);
@@ -861,7 +870,7 @@ function AdminPanel({ results, allBets, onSetResult, onSetThird, onSetGroupOrder
             style={{width:"100%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,padding:"8px 10px",color:"#fff",fontSize:"0.85rem",marginBottom:10,outline:"none"}}>
             <option value="">Selecione um jogo...</option>
             {upcoming.map(m=>(
-              <option key={m.id} value={m.id}>{m.time} · {m.home} × {m.away} {results[m.id]?.homeScore!==undefined?`(${results[m.id].homeScore}-${results[m.id].awayScore})`:""}</option>
+              <option key={m.id} value={m.id}>{m.time} · {matchLabel(m)} {results[m.id]?.homeScore!==undefined?`(${results[m.id].homeScore}-${results[m.id].awayScore})`:""}</option>
             ))}
           </select>
           {sel && (<>
@@ -892,7 +901,7 @@ function AdminPanel({ results, allBets, onSetResult, onSetThird, onSetGroupOrder
           if (!gameBets.length) return null;
           return (
             <div key={m.id} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:"10px 12px",marginBottom:8}}>
-              <div style={{fontSize:"0.8rem",fontWeight:700,color:"#fff",marginBottom:6}}>{m.homeFlag} {m.home} × {m.away} {m.awayFlag} <span style={{color:"#64748b",fontWeight:400,fontSize:"0.7rem"}}>{m.date} {m.time}</span></div>
+              <div style={{fontSize:"0.8rem",fontWeight:700,color:"#fff",marginBottom:6}}>{matchLabel(m)} <span style={{color:"#64748b",fontWeight:400,fontSize:"0.7rem"}}>{m.date} {m.time}</span></div>
               {gameBets.map(([user,bets])=>{
                 const b=bets[m.id]; const r=results[m.id]; const s=r?.homeScore!==undefined?scoreMatch(b,r,m):null;
                 return (

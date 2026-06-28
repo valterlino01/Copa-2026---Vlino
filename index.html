@@ -452,6 +452,11 @@ function MatchBet({ match, myBet, result, onSaveBet, saving, resolved }) {
   const [h, setH] = useState(myBet?.homeScore ?? "");
   const [a, setA] = useState(myBet?.awayScore ?? "");
   const [adv, setAdv] = useState(myBet?.advance ?? "");
+  useEffect(() => {
+    setH(myBet?.homeScore ?? "");
+    setA(myBet?.awayScore ?? "");
+    setAdv(myBet?.advance ?? "");
+  }, [myBet?.homeScore, myBet?.awayScore, myBet?.advance]);
   const locked = isLocked(match);
   const mins = minsToLock(match);
   const phaseColor = PHASE_COLORS[match.phase] || "#3b82f6";
@@ -1043,6 +1048,11 @@ function KnockoutMatch({ match, resolved, myBet, result, onSaveBet, saving }) {
   const [h, setH] = useState(myBet?.homeScore ?? "");
   const [a, setA] = useState(myBet?.awayScore ?? "");
   const [adv, setAdv] = useState(myBet?.advance ?? "");
+  useEffect(() => {
+    setH(myBet?.homeScore ?? "");
+    setA(myBet?.awayScore ?? "");
+    setAdv(myBet?.advance ?? "");
+  }, [myBet?.homeScore, myBet?.awayScore, myBet?.advance]);
   const locked = isLocked(match);
   const phaseColor = PHASE_COLORS[match.phase] || "#8b5cf6";
   const score = myBet && result?.homeScore!==null && result?.homeScore!==undefined

@@ -873,27 +873,34 @@ function AdminPanel({ results, allBets, onSetResult, onSetThird, onSetGroupOrder
               <option key={m.id} value={m.id}>{m.time} · {matchLabel(m)} {results[m.id]?.homeScore!==undefined?`(${results[m.id].homeScore}-${results[m.id].awayScore})`:""}</option>
             ))}
           </select>
-          {sel && (<>
+          {sel && (() => {
+            const sr = sel.phase!=="Grupos" ? resolveKnockoutMatch(sel, koCtx) : null;
+            const selHomeName = sr?.home?.team || sel.home;
+            const selAwayName = sr?.away?.team || sel.away;
+            const selHomeFlag = sr?.home?.flag || sel.homeFlag;
+            const selAwayFlag = sr?.away?.flag || sel.awayFlag;
+            return (<>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <span style={{color:"#fff",flex:1,fontSize:"0.85rem"}}>{sel.homeFlag} {sel.home}</span>
+              <span style={{color:"#fff",flex:1,fontSize:"0.85rem"}}>{selHomeFlag} {selHomeName}</span>
               <input type="number" min="0" max="30" value={h} onChange={e=>setH(e.target.value)} style={{width:44,height:36,textAlign:"center",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:6,color:"#fff",fontSize:"1.1rem",fontWeight:700,outline:"none"}}/>
               <span style={{color:"#475569",fontWeight:700}}>–</span>
               <input type="number" min="0" max="30" value={a} onChange={e=>setA(e.target.value)} style={{width:44,height:36,textAlign:"center",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:6,color:"#fff",fontSize:"1.1rem",fontWeight:700,outline:"none"}}/>
-              <span style={{color:"#fff",flex:1,fontSize:"0.85rem",textAlign:"right"}}>{sel.away} {sel.awayFlag}</span>
+              <span style={{color:"#fff",flex:1,fontSize:"0.85rem",textAlign:"right"}}>{selAwayName} {selAwayFlag}</span>
             </div>
             {selIsKO && selIsDraw && (
               <div style={{marginTop:10,padding:"8px 10px",background:"rgba(250,204,21,0.08)",borderRadius:8}}>
                 <p style={{fontSize:"0.68rem",color:"#fbbf24",marginBottom:6}}>Empate no tempo normal/prorrogação → quem venceu nos pênaltis?</p>
                 <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>setAdv("home")} style={{flex:1,padding:"6px",borderRadius:6,border:"none",fontSize:"0.72rem",fontWeight:700,cursor:"pointer",background:adv==="home"?"#059669":"rgba(255,255,255,0.06)",color:adv==="home"?"#fff":"#94a3b8"}}>{sel.homeFlag} {sel.home}</button>
-                  <button onClick={()=>setAdv("away")} style={{flex:1,padding:"6px",borderRadius:6,border:"none",fontSize:"0.72rem",fontWeight:700,cursor:"pointer",background:adv==="away"?"#059669":"rgba(255,255,255,0.06)",color:adv==="away"?"#fff":"#94a3b8"}}>{sel.away} {sel.awayFlag}</button>
+                  <button onClick={()=>setAdv("home")} style={{flex:1,padding:"6px",borderRadius:6,border:"none",fontSize:"0.72rem",fontWeight:700,cursor:"pointer",background:adv==="home"?"#059669":"rgba(255,255,255,0.06)",color:adv==="home"?"#fff":"#94a3b8"}}>{selHomeFlag} {selHomeName}</button>
+                  <button onClick={()=>setAdv("away")} style={{flex:1,padding:"6px",borderRadius:6,border:"none",fontSize:"0.72rem",fontWeight:700,cursor:"pointer",background:adv==="away"?"#059669":"rgba(255,255,255,0.06)",color:adv==="away"?"#fff":"#94a3b8"}}>{selAwayName} {selAwayFlag}</button>
                 </div>
               </div>
             )}
             <div style={{textAlign:"right",marginTop:10}}>
               <button onClick={handleSave} disabled={saving} style={{background:"#059669",border:"none",borderRadius:6,padding:"8px 18px",color:"#fff",fontSize:"0.8rem",fontWeight:700,cursor:"pointer"}}>{saving?"...":"SALVAR RESULTADO"}</button>
             </div>
-          </>)}
+          </>);
+          })()}
         </div>
         <p style={{color:"#93c5fd",fontSize:"0.8rem",fontWeight:700,letterSpacing:"0.06em",marginBottom:8}}>PALPITES POR JOGO</p>
         {SCHEDULE.filter(m=>m.phase===filterPhase).map(m => {

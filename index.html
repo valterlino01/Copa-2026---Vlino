@@ -1406,5 +1406,17 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 </script>
+<script>
+// Auto-atualização: registra o SW novo e recarrega uma vez quando ele assumir.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(reg => reg.update()).catch(()=>{});
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloaded) return; // guarda contra loop de reload
+    reloaded = true;
+    window.location.reload();
+  });
+}
+</script>
 </body>
 </html>

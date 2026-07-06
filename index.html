@@ -578,7 +578,7 @@ function BolaoTab({ user, bets, results, onSaveBet, savingId, manualOrder, manua
   const koCtx = { tables: koTables, thirdsRanking: koThirds, results, manualThirds };
   const filtered = SCHEDULE.filter(m => {
     const dt = getMatchDateTime(m).getTime();
-    if (filter === "proximos") return dt > now - 7200000 && dt < now + 86400000*3;
+    if (filter === "proximos") return dt > now - 7200000 && dt < now + 86400000*7;
     if (filter === "encerrados") return dt < now - 7200000;
     return true;
   });
